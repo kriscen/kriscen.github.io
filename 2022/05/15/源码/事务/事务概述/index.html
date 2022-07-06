@@ -16,13 +16,15 @@
   <meta name="author" content="kris cen">
   <meta name="keywords" content="">
   
-    <meta property="og:type" content="article">
+    <meta name="description" content="一、事务的ACID1. Atomic原子性一堆sql要么一起成功，要么全部失败 2. Consistency一致性针对一组SQL执行之前，数据是准确的，执行之后的数据也必须是准确的 3. Isolation隔离性多事务之间是存在事务隔离，互不影响 4.Durability持久性事务成功之后，对数据的修改时永久有效的 二、事务隔离级别1. 读未提交 Read Uncommitted某个事务还未提交的">
+<meta property="og:type" content="article">
 <meta property="og:title" content="事务概述">
 <meta property="og:url" content="http://example.com/2022/05/15/%E6%BA%90%E7%A0%81/%E4%BA%8B%E5%8A%A1/%E4%BA%8B%E5%8A%A1%E6%A6%82%E8%BF%B0/index.html">
 <meta property="og:site_name" content="kris&#39; cabin">
+<meta property="og:description" content="一、事务的ACID1. Atomic原子性一堆sql要么一起成功，要么全部失败 2. Consistency一致性针对一组SQL执行之前，数据是准确的，执行之后的数据也必须是准确的 3. Isolation隔离性多事务之间是存在事务隔离，互不影响 4.Durability持久性事务成功之后，对数据的修改时永久有效的 二、事务隔离级别1. 读未提交 Read Uncommitted某个事务还未提交的">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2022-05-15T11:01:00.000Z">
-<meta property="article:modified_time" content="2022-07-05T15:30:49.794Z">
+<meta property="article:modified_time" content="2022-07-06T09:57:29.685Z">
 <meta property="article:author" content="kris cen">
 <meta property="article:tag" content="事务">
 <meta name="twitter:card" content="summary_large_image">
@@ -195,7 +197,7 @@
   
     <span class="post-meta mr-2">
       <i class="iconfont icon-chart"></i>
-      0 字
+      3k 字
     </span>
   
 
@@ -204,7 +206,7 @@
       <i class="iconfont icon-clock-fill"></i>
       
       
-      1 分钟
+      26 分钟
     </span>
   
 
@@ -236,7 +238,141 @@
             <h1 style="display: none">事务概述</h1>
             
             <div class="markdown-body">
-              
+              <h1 id="一、事务的ACID"><a href="#一、事务的ACID" class="headerlink" title="一、事务的ACID"></a>一、事务的ACID</h1><h2 id="1-Atomic原子性"><a href="#1-Atomic原子性" class="headerlink" title="1. Atomic原子性"></a>1. Atomic原子性</h2><p>一堆sql要么一起成功，要么全部失败</p>
+<h2 id="2-Consistency一致性"><a href="#2-Consistency一致性" class="headerlink" title="2. Consistency一致性"></a>2. Consistency一致性</h2><p>针对一组SQL执行之前，数据是准确的，执行之后的数据也必须是准确的</p>
+<h2 id="3-Isolation隔离性"><a href="#3-Isolation隔离性" class="headerlink" title="3. Isolation隔离性"></a>3. Isolation隔离性</h2><p>多事务之间是存在事务隔离，互不影响</p>
+<h2 id="4-Durability持久性"><a href="#4-Durability持久性" class="headerlink" title="4.Durability持久性"></a>4.Durability持久性</h2><p>事务成功之后，对数据的修改时永久有效的</p>
+<h1 id="二、事务隔离级别"><a href="#二、事务隔离级别" class="headerlink" title="二、事务隔离级别"></a>二、事务隔离级别</h1><h2 id="1-读未提交-Read-Uncommitted"><a href="#1-读未提交-Read-Uncommitted" class="headerlink" title="1. 读未提交 Read Uncommitted"></a>1. 读未提交 Read Uncommitted</h2><p>某个事务还未提交的时候，修改的数据，就让别的事务读取到了。</p>
+<h2 id="2-读已提交-Read-Committed"><a href="#2-读已提交-Read-Committed" class="headerlink" title="2. 读已提交 Read Committed"></a>2. 读已提交 Read Committed</h2><p>事务A在执行的时候，查询到一个数据是1。过了一段时间，事务B把数据修改为2并且提交。然后事务A再次查询数据变成2.<br>即一个事务内对一个数据的两次读，可能会读到不一样的值。</p>
+<h2 id="3-可重复读-Read-Repeatable"><a href="#3-可重复读-Read-Repeatable" class="headerlink" title="3. 可重复读 Read Repeatable"></a>3. 可重复读 Read Repeatable</h2><p>事务A在执行的过程中，对某个数据的值，无论读多少次，值都是1。就算过程中事务B修改了数据的值，并且提交，但是事务A还是读取到自己事务开始时候的数据的值。</p>
+<h2 id="4-串行化-Serializable"><a href="#4-串行化-Serializable" class="headerlink" title="4. 串行化 Serializable"></a>4. 串行化 Serializable</h2><p>幻读、不可重复读和可重复读都是两个事务同时对某个数据在修改，但是幻读针对的是插入。<br>事务A是将所有行的某个字段修改为2，但是事务B插入了一个事务，那个字段的值为1。<br>如果要解决幻读，就需要使用串行化级别的隔离级别，将所有的事务串行起来，不允许多个事务并行操作。</p>
+<table>
+<thead>
+<tr>
+<th>隔离级别</th>
+<th>脏读</th>
+<th>不可重复读</th>
+<th>幻读</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>读未提交</td>
+<td>√</td>
+<td>√</td>
+<td>√</td>
+</tr>
+<tr>
+<td>读已提交</td>
+<td>×</td>
+<td>√</td>
+<td>√</td>
+</tr>
+<tr>
+<td>可重复读</td>
+<td>×</td>
+<td>×</td>
+<td>√</td>
+</tr>
+<tr>
+<td>可串行化</td>
+<td>×</td>
+<td>×</td>
+<td>×</td>
+</tr>
+</tbody></table>
+<p>脏读：某个事务还未提交的时候，修改的数据，就让别的事务读取到了。<br>不可重复读：在一个事务内多次重复读取的数据准确性<br>幻读：事务A 按照一定条件进行数据读取， 期间事务B 插入了相同搜索条件的新数据，事务A再次按照原先条件进行读取时，发现了事务B 新插入的数据</p>
+<blockquote>
+<p>如果事务A 按一定条件搜索， 期间事务B 删除了符合条件的某一条数据，导致事务A 再次读取时数据少了一条。这种情况归为 不可重复读</p>
+</blockquote>
+<h1 id="三、MySQL的MVCC机制"><a href="#三、MySQL的MVCC机制" class="headerlink" title="三、MySQL的MVCC机制"></a>三、MySQL的MVCC机制</h1><p>MVVC:multi-version concurrency control 多版本并发控制</p>
+<p>MySQL默认的隔离级别为Read Reoeatable，即每个事务都会开启一个自己要操作的某个数据的快照，事务期间，读到的都是这个数据快照。对一个数据的多次读也都是一样的。</p>
+<p>innodb存储引擎，在每行数据的最后加两个隐藏列，一个保存行的创建时间，一个保存行的删除时间。但是这存放的不是时间，而是事务id，事务id是mysql自己维护的自增值，全局唯一。</p>
+<blockquote>
+<p>在一个事务内查询的时候，mysql只会查询创建时间的事务id小于等于当前事务id的行，这样可以确保这个行是在当前事务中创建，或者是之前创建的；同时一个行的删除时间的事务id要么没有定义（就是没删除），要么是必当前事务id大（在事务开启之后才被删除）；满足这两个条件的数据都会被查出来。</p>
+<p>那么如果某个事务执行期间，别的事务更新了一条数据呢？这个很关键的一个实现，其实就是在innodb中，是插入了一行记录，然后将新插入的记录的创建时间设置为新的事务的id，同时将这条记录之前的那个版本的删除时间设置为新的事务的id。</p>
+</blockquote>
+<h1 id="四、Spring事务传播机制"><a href="#四、Spring事务传播机制" class="headerlink" title="四、Spring事务传播机制"></a>四、Spring事务传播机制</h1><ol>
+<li><strong>PROPAGATION_REQUIRED</strong></li>
+</ol>
+<p>这个是最常见的，就是说，如果ServiceA.method调用了ServiceB.method，如果ServiceA.method开启了事务，然后ServiceB.method也声明了事务，那么ServiceB.method不会开启独立事务，而是将自己的操作放在ServiceA.method的事务中来执行，ServiceA和ServiceB任何一个报错都会导致整个事务回滚。这就是默认的行为，其实一般我们都是需要这样子的。</p>
+<ol start="2">
+<li><strong>PROPAGATION_SUPPORTS</strong></li>
+</ol>
+<p>如果ServiceA.method开了事务，那么ServiceB就将自己加入ServiceA中来运行，如果ServiceA.method没有开事务，那么ServiceB自己也不开事务</p>
+<ol start="3">
+<li><strong>PROPAGATION_MANDATORY</strong></li>
+</ol>
+<p>必须被一个开启了事务的方法来调用自己，否则报错</p>
+<ol start="4">
+<li><strong>PROPAGATION_REQUIRES_NEW</strong></li>
+</ol>
+<p>ServiceB.method强制性自己开启一个新的事务，然后ServiceA.method的事务会卡住，等ServiceB事务完了自己再继续。这就是影响的回滚了，如果ServiceA报错了，ServiceB是不会受到影响的，ServiceB报错了，ServiceA也可以选择性的回滚或者是提交。</p>
+<ol start="5">
+<li><strong>PROPAGATION_NOT_SUPPORTED</strong></li>
+</ol>
+<p>就是ServiceB.method不支持事务，ServiceA的事务执行到ServiceB那儿，就挂起来了，ServiceB用非事务方式运行结束，ServiceA事务再继续运行。这个好处就是ServiceB代码报错不会让ServiceA回滚。</p>
+<ol start="6">
+<li><strong>PROPAGATION_NEVER</strong></li>
+</ol>
+<p>不能被一个事务来调用，ServiceA.method开事务了，但是调用了ServiceB会报错</p>
+<ol start="7">
+<li><strong>PROPAGATION_NESTED</strong></li>
+</ol>
+<p>开启嵌套事务，ServiceB开启一个子事务，如果回滚的话，那么ServiceB就回滚到开启子事务的这个save point。</p>
+<h1 id="五、CAP理论"><a href="#五、CAP理论" class="headerlink" title="五、CAP理论"></a>五、CAP理论</h1><ul>
+<li>Consistency 一致性<ul>
+<li>强一致性</li>
+</ul>
+</li>
+</ul>
+<p>在一个分布式系统中，一旦做了一个数据的修改，那么这个操作成功的时候，就必须是分布式系统的各个节点都是一样的。</p>
+<ul>
+<li>弱一致性</li>
+</ul>
+<p>在一个分布式系统中，一旦做了一个数据的修改，不确定能不能让各个节点都更新成功</p>
+<ul>
+<li>最终一致性</li>
+</ul>
+<p>更新过后一段时间内，数据不一致，最后经过一段时间成功了</p>
+<ul>
+<li>Availability 可用性</li>
+</ul>
+<p>分布式系统是可用的。就是不存在一会访问成功一会失败的情况。<br>可用性级别划分：		</p>
+<ul>
+<li>99% 一年只能有80小时左右是可以允许访问失败的</li>
+<li>99.9% 一年大概有8小时左右可以访问失败</li>
+<li>99.99% 一年中大概存在一小时访问失败</li>
+<li>99.999% 一年中大概存在五分钟访问失败</li>
+<li>99.9999% 一年中大概存在一分钟访问失败</li>
+<li>Partition Tolerence 分区容忍性</li>
+</ul>
+<p>分布式系统如果遇到了网络分区的故障，即各个系统之间无法正常通讯。分布式系统可以容忍网络故障的能力。</p>
+<p><strong>CAP中，只能满足CP或者AP，不可能三者兼得，其中必须满足P。分布式系统中的分区容忍性非常重要，如果一旦出现了一些网络分区的故障，保证整套系统继续运转是非常重要的。</strong></p>
+<ul>
+<li>CP 一致性+分区容忍性</li>
+<li>AP 可用性+分区容忍性</li>
+</ul>
+<p>假如分布式系统出现了网络分区故障，因为保障了P，所以系统正常运转。但是系统之间无法进行通信，也无法进行数据同步。<br>此时客户端进行了一个数据保存，那么此时有两个情况：</p>
+<ol>
+<li>保证CP，就返回特殊的结果(异常)给客户端</li>
+<li>保证AP，就返回不一致的数据</li>
+</ol>
+<p>类似12306，电商系统这些业务系统一般都是AP。就商品库存或者火车票库存是旧的数据，在实际执行的时候再进行数据检查即可。</p>
+<p>典型系统：<br>CP: zookeeper、mongodb、hbase等<br>AP:12306等业务系统</p>
+<h1 id="六、BASE理论"><a href="#六、BASE理论" class="headerlink" title="六、BASE理论"></a>六、BASE理论</h1><p>BASE就是Basicly Abaliable、Soft State、Eventual Consistency，即基本可用、软状态、最终一致性</p>
+<ul>
+<li>基本可用</li>
+</ul>
+<p>可以适当进行降级，在故障的时候，直接引导到降级的一些功能里面</p>
+<ul>
+<li>软状态</li>
+</ul>
+<p>可以存在中间的数据状态，比如多节点在同步数据，在一段时间内，可能每个节点数据不一致，正在同步过程中，这个就是软状态</p>
+<ul>
+<li>最终一致性</li>
+</ul>
+<p>虽然存在软状态，但是最终结果会变为一直的</p>
+
             </div>
             <hr>
             <div>

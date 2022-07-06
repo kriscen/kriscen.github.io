@@ -16,16 +16,24 @@
   <meta name="author" content="kris cen">
   <meta name="keywords" content="">
   
-    <meta property="og:type" content="article">
+    <meta name="description" content="事务多事务并发问题脏写两个事务在没有提交的情况下，修改同一个事务，结果其中一个事务回滚，将另一个事务修改的值也回滚了。 事务A和事务B同事更新一条数据，事务A先更新为值A，事务B然后更新为值B。事务A在更新后写入一条undo log，值为NULL。事务B写入一条undo log，值为A。事务B先提交事务，更新值为B。然后事务A进行回滚，读取undo log，将值回滚为NULL。针对事务B而言就是脏">
+<meta property="og:type" content="article">
 <meta property="og:title" content="事务机制">
 <meta property="og:url" content="http://example.com/2022/05/02/MySQL/%E4%BA%8B%E5%8A%A1%E6%9C%BA%E5%88%B6/index.html">
 <meta property="og:site_name" content="kris&#39; cabin">
+<meta property="og:description" content="事务多事务并发问题脏写两个事务在没有提交的情况下，修改同一个事务，结果其中一个事务回滚，将另一个事务修改的值也回滚了。 事务A和事务B同事更新一条数据，事务A先更新为值A，事务B然后更新为值B。事务A在更新后写入一条undo log，值为NULL。事务B写入一条undo log，值为A。事务B先提交事务，更新值为B。然后事务A进行回滚，读取undo log，将值回滚为NULL。针对事务B而言就是脏">
 <meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://cdn.nlark.com/yuque/0/2022/png/12966419/1651029518144-5e661fdf-7abb-4f0e-93f0-7c3db9335730.png#clientId=u20432978-2835-4&crop=0&crop=0&crop=1&crop=1&from=paste&height=326&id=uc9a8f7dd&margin=%5Bobject%20Object%5D&name=image.png&originHeight=403&originWidth=562&originalType=binary&ratio=1&rotation=0&showTitle=false&size=81669&status=done&style=none&taskId=u57fce88d-27aa-4e39-ad81-89bdd749e30&title=&width=455">
+<meta property="og:image" content="https://cdn.nlark.com/yuque/0/2022/png/12966419/1651031647526-72f57feb-f66d-4b44-9962-a9ed58a85ab9.png#clientId=u20432978-2835-4&crop=0&crop=0&crop=1&crop=1&from=paste&height=157&id=u5063c28d&margin=%5Bobject%20Object%5D&name=image.png&originHeight=226&originWidth=607&originalType=binary&ratio=1&rotation=0&showTitle=false&size=51901&status=done&style=none&taskId=u862d3bba-8425-44a1-aaed-691ef99d32a&title=&width=422">
+<meta property="og:image" content="https://cdn.nlark.com/yuque/0/2022/png/12966419/1651032168697-67c35815-c164-4f7c-a8dc-79bd5f265cad.png#clientId=u20432978-2835-4&crop=0&crop=0&crop=1&crop=1&from=paste&height=277&id=u352b7c95&margin=%5Bobject%20Object%5D&name=image.png&originHeight=338&originWidth=690&originalType=binary&ratio=1&rotation=0&showTitle=false&size=95044&status=done&style=none&taskId=ua741a04c-c9be-4eba-bfe5-4937610955d&title=&width=565">
+<meta property="og:image" content="https://cdn.nlark.com/yuque/0/2022/png/12966419/1651032340660-14e5436b-4509-4e0c-8164-c8209d292887.png#clientId=u20432978-2835-4&crop=0&crop=0&crop=1&crop=1&from=paste&height=314&id=u8323eb92&margin=%5Bobject%20Object%5D&name=image.png&originHeight=375&originWidth=611&originalType=binary&ratio=1&rotation=0&showTitle=false&size=87144&status=done&style=none&taskId=u71997f1f-b65c-4518-a459-6be76cddd92&title=&width=512">
+<meta property="og:image" content="https://cdn.nlark.com/yuque/0/2022/png/12966419/1651032475880-2c600f3d-6867-4497-a59d-9899404e6091.png#clientId=u20432978-2835-4&crop=0&crop=0&crop=1&crop=1&from=paste&height=386&id=u2324543b&margin=%5Bobject%20Object%5D&name=image.png&originHeight=464&originWidth=603&originalType=binary&ratio=1&rotation=0&showTitle=false&size=127094&status=done&style=none&taskId=ua1e641d9-70e0-4f54-829e-c0c91ac3c67&title=&width=501">
 <meta property="article:published_time" content="2022-05-02T11:06:00.000Z">
-<meta property="article:modified_time" content="2022-07-05T15:06:58.438Z">
+<meta property="article:modified_time" content="2022-07-06T08:50:44.161Z">
 <meta property="article:author" content="kris cen">
 <meta property="article:tag" content="MySQL">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://cdn.nlark.com/yuque/0/2022/png/12966419/1651029518144-5e661fdf-7abb-4f0e-93f0-7c3db9335730.png#clientId=u20432978-2835-4&crop=0&crop=0&crop=1&crop=1&from=paste&height=326&id=uc9a8f7dd&margin=%5Bobject%20Object%5D&name=image.png&originHeight=403&originWidth=562&originalType=binary&ratio=1&rotation=0&showTitle=false&size=81669&status=done&style=none&taskId=u57fce88d-27aa-4e39-ad81-89bdd749e30&title=&width=455">
   
   
   <title>事务机制 - kris&#39; cabin</title>
@@ -195,7 +203,7 @@
   
     <span class="post-meta mr-2">
       <i class="iconfont icon-chart"></i>
-      0 字
+      2.3k 字
     </span>
   
 
@@ -204,7 +212,7 @@
       <i class="iconfont icon-clock-fill"></i>
       
       
-      1 分钟
+      20 分钟
     </span>
   
 
@@ -236,7 +244,120 @@
             <h1 style="display: none">事务机制</h1>
             
             <div class="markdown-body">
-              
+              <h1 id="事务"><a href="#事务" class="headerlink" title="事务"></a>事务</h1><h2 id="多事务并发问题"><a href="#多事务并发问题" class="headerlink" title="多事务并发问题"></a>多事务并发问题</h2><h3 id="脏写"><a href="#脏写" class="headerlink" title="脏写"></a>脏写</h3><p>两个事务在没有提交的情况下，修改同一个事务，结果其中一个事务回滚，将另一个事务修改的值也回滚了。</p>
+<p>事务A和事务B同事更新一条数据，事务A先更新为值A，事务B然后更新为值B。<br>事务A在更新后写入一条undo log，值为NULL。事务B写入一条undo log，值为A。<br>事务B先提交事务，更新值为B。然后事务A进行回滚，读取undo log，将值回滚为NULL。<br>针对事务B而言就是脏写。</p>
+<h3 id="脏读"><a href="#脏读" class="headerlink" title="脏读"></a>脏读</h3><p>某个事务还未提交的时候，修改的数据，就让别的事务读取到了。</p>
+<h3 id="不可重复读"><a href="#不可重复读" class="headerlink" title="不可重复读"></a>不可重复读</h3><p>在一个事务内多次重复读取的数据准确性</p>
+<p>事务A先读取了一次数据，然后事务B进行修改，提交事务。事务A又读取了一次数据，会导致两次读取数据不一致。</p>
+<h3 id="幻读"><a href="#幻读" class="headerlink" title="幻读"></a>幻读</h3><p>事务A 按照一定条件进行数据读取， 期间事务B 插入了相同搜索条件的新数据，事务A再次按照原先条件进行读取时，发现了事务B 新插入的数据</p>
+<h2 id="数据库事务隔离级别"><a href="#数据库事务隔离级别" class="headerlink" title="数据库事务隔离级别"></a>数据库事务隔离级别</h2><p>不同的隔离级别可以避免不同的事务并发问题</p>
+<table>
+<thead>
+<tr>
+<th>隔离级别</th>
+<th>脏写</th>
+<th>脏读</th>
+<th>不可重复读</th>
+<th>幻读</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>读未提交</td>
+<td>×</td>
+<td>√</td>
+<td>√</td>
+<td>√</td>
+</tr>
+<tr>
+<td>读已提交</td>
+<td>×</td>
+<td>×</td>
+<td>√</td>
+<td>√</td>
+</tr>
+<tr>
+<td>可重复读</td>
+<td>×</td>
+<td>×</td>
+<td>×</td>
+<td>√</td>
+</tr>
+<tr>
+<td>可串行化</td>
+<td>×</td>
+<td>×</td>
+<td>×</td>
+<td>×</td>
+</tr>
+</tbody></table>
+<h3 id="read-uncommitted-读未提交"><a href="#read-uncommitted-读未提交" class="headerlink" title="read uncommitted 读未提交"></a>read uncommitted 读未提交</h3><p>不允许脏写</p>
+<h3 id="read-commited-读已提交"><a href="#read-commited-读已提交" class="headerlink" title="read commited 读已提交"></a>read commited 读已提交</h3><p>不会发生脏写和脏读<br>简称RC级别</p>
+<h3 id="repeatable-read-可重复读"><a href="#repeatable-read-可重复读" class="headerlink" title="repeatable read 可重复读"></a>repeatable read 可重复读</h3><p>不会发生脏写、脏读和不可重复读<br>简称RR级别，MySQL默认设置的事务隔离级别</p>
+<h3 id="serializable-串行化"><a href="#serializable-串行化" class="headerlink" title="serializable 串行化"></a>serializable 串行化</h3><p>不允许事务并发执行，只能串行执行。</p>
+<h3 id="Spring调整事务隔离级别"><a href="#Spring调整事务隔离级别" class="headerlink" title="Spring调整事务隔离级别"></a>Spring调整事务隔离级别</h3><figure class="highlight pgsql"><table><tr><td class="gutter"><div class="code-wrapper"><pre><span class="line">1</span><br></pre></div></td><td class="code"><pre><code class="hljs pgsql">@<span class="hljs-keyword">Transaction</span>(<span class="hljs-keyword">isolation</span>=<span class="hljs-keyword">Isolation</span>.<span class="hljs-keyword">DEFAULT</span>)<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>DEFAULT</li>
+<li>READ_UNCOMMITTED</li>
+<li>READ_COMMITTED</li>
+<li>REPEATABLE_READ</li>
+<li>SERIALIZABLE</li>
+</ul>
+<h1 id="MVCC多版本并发控制机制"><a href="#MVCC多版本并发控制机制" class="headerlink" title="MVCC多版本并发控制机制"></a>MVCC多版本并发控制机制</h1><p>multi-version concurrent control</p>
+<h2 id="undo-log版本链"><a href="#undo-log版本链" class="headerlink" title="undo log版本链"></a>undo log版本链</h2><h3 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h3><p>每个数据存在两个隐藏字段trx_id和roll_pointer。trx_id标识最近一次更新这条数据的事务id，roll_pointer指向更新这个事务之前生成的undo log。<br><img src="https://cdn.nlark.com/yuque/0/2022/png/12966419/1651029518144-5e661fdf-7abb-4f0e-93f0-7c3db9335730.png#clientId=u20432978-2835-4&crop=0&crop=0&crop=1&crop=1&from=paste&height=326&id=uc9a8f7dd&margin=%5Bobject%20Object%5D&name=image.png&originHeight=403&originWidth=562&originalType=binary&ratio=1&rotation=0&showTitle=false&size=81669&status=done&style=none&taskId=u57fce88d-27aa-4e39-ad81-89bdd749e30&title=&width=455" srcset="/img/loading.gif" lazyload alt="image.png"></p>
+<ol>
+<li>事务A先更新数据，数据的值为A，trx_id为50，roll_pointer指向空的undo log</li>
+<li>事务B修改数据，数据的值改为B，trx_id为58，然后更新之前会生成一个undo log记录值A，roll_pointer指向生成的undo log</li>
+<li>事务C修改数据，数据的值改为C，trx_id为69，然后生成一条undo log记录记录值B，trx_id以及roll_pointer。数据的roll_pointer指向这个undo log。</li>
+</ol>
+<h3 id="ReadView机制"><a href="#ReadView机制" class="headerlink" title="ReadView机制"></a>ReadView机制</h3><p>执行一个事务的时候，会生成一个ReadView。</p>
+<p>ReadView关键的字段</p>
+<ul>
+<li>m_ids</li>
+</ul>
+<p>此时有哪些事务在MySQL里执行还没有提交</p>
+<ul>
+<li>min_trx_id</li>
+</ul>
+<p>m_ids里最小的值</p>
+<ul>
+<li>max_trx_id</li>
+</ul>
+<p>mysql下一个要生成的事务id，即最大事务id</p>
+<ul>
+<li>creator_trx_id</li>
+</ul>
+<p>自身的事务id</p>
+<p>保证自己只能读取到事务开启前，别的提交事务更新的值，还有自己事务更新的值。<br>如果事务开启前，别的事务正在运行，你事务开启之后，别的事务更新了值，自己绝对读不到。<br>如果事务开启后，比你晚开启的事务更新了值，也绝对读不到。</p>
+<h3 id="RR数据隔离机制"><a href="#RR数据隔离机制" class="headerlink" title="RR数据隔离机制"></a>RR数据隔离机制</h3><p>事务只会开启一个ReadView</p>
+<p>流程	</p>
+<ol>
+<li>假设存在原始数据，trx_id&#x3D;32。</li>
+<li>两个事务：事务A(id&#x3D;45)和事务B(id&#x3D;59)并发执行过来，事务B需要进行数据更新，事务A进行数据读取。</li>
+<li>事务A开启一个ReadView。这个ReadView里m_ids包含事务A和事务B的两个id，45和59，min_trx_id是45，max_trx_id是60,creator_trx_id是45。</li>
+</ol>
+<p><img src="https://cdn.nlark.com/yuque/0/2022/png/12966419/1651031647526-72f57feb-f66d-4b44-9962-a9ed58a85ab9.png#clientId=u20432978-2835-4&crop=0&crop=0&crop=1&crop=1&from=paste&height=157&id=u5063c28d&margin=%5Bobject%20Object%5D&name=image.png&originHeight=226&originWidth=607&originalType=binary&ratio=1&rotation=0&showTitle=false&size=51901&status=done&style=none&taskId=u862d3bba-8425-44a1-aaed-691ef99d32a&title=&width=422" srcset="/img/loading.gif" lazyload alt="image.png"></p>
+<ol start="4">
+<li>事务A第一次查询这行数据，判断当前这行数据的trx_id是否小于ReadView的min_trx_id，发现trx_id&#x3D;32，小于ReadView的min_trx_id。说明你的事务开启前，修改这行数据的事务已经提交了，此时可以查询这个数据。</li>
+<li>然后事务B修改了这个值，将这个数据的trx_id改为自己的id59，同时roll_pointer指向了修改之前生成的一个undo log。然后事务B提交</li>
+</ol>
+<p><img src="https://cdn.nlark.com/yuque/0/2022/png/12966419/1651032168697-67c35815-c164-4f7c-a8dc-79bd5f265cad.png#clientId=u20432978-2835-4&crop=0&crop=0&crop=1&crop=1&from=paste&height=277&id=u352b7c95&margin=%5Bobject%20Object%5D&name=image.png&originHeight=338&originWidth=690&originalType=binary&ratio=1&rotation=0&showTitle=false&size=95044&status=done&style=none&taskId=ua741a04c-c9be-4eba-bfe5-4937610955d&title=&width=565" srcset="/img/loading.gif" lazyload alt="image.png"></p>
+<ol start="6">
+<li>此时事务A再次查询，发现此时trx_id为59，大于ReadView的min_trx_id，同时小于max_trx_id，说明更新这条数据的事务，可能和自己差不多同时开启。然后会去看txr_id是否在ReadView的m_ids列表中，发现数据在其中，就表示这个修改数据的事务和自己同一时段并发执行提交的，所以这行数据不能查询。</li>
+</ol>
+<p>然后会根据roll_pointer，顺着undo log日志链去找最近的一条undo log。判断是否可读。<br><img src="https://cdn.nlark.com/yuque/0/2022/png/12966419/1651032340660-14e5436b-4509-4e0c-8164-c8209d292887.png#clientId=u20432978-2835-4&crop=0&crop=0&crop=1&crop=1&from=paste&height=314&id=u8323eb92&margin=%5Bobject%20Object%5D&name=image.png&originHeight=375&originWidth=611&originalType=binary&ratio=1&rotation=0&showTitle=false&size=87144&status=done&style=none&taskId=u71997f1f-b65c-4518-a459-6be76cddd92&title=&width=512" srcset="/img/loading.gif" lazyload alt="image.png"></p>
+<ol start="7">
+<li>此时事务A自己更新了这个数据，改为值A，trx_id改为45，同时保存之前事务B修改的值的快照。</li>
+<li>事务A又查询了这条数据，发现trx_id&#x3D;45，等于ReadView里的creator_trx_id，说明这行数据是自己修改的可以读到。</li>
+</ol>
+<p><img src="https://cdn.nlark.com/yuque/0/2022/png/12966419/1651032475880-2c600f3d-6867-4497-a59d-9899404e6091.png#clientId=u20432978-2835-4&crop=0&crop=0&crop=1&crop=1&from=paste&height=386&id=u2324543b&margin=%5Bobject%20Object%5D&name=image.png&originHeight=464&originWidth=603&originalType=binary&ratio=1&rotation=0&showTitle=false&size=127094&status=done&style=none&taskId=ua1e641d9-70e0-4f54-829e-c0c91ac3c67&title=&width=501" srcset="/img/loading.gif" lazyload alt="image.png"></p>
+<ol start="9">
+<li>事务A执行的过程中，又开启了事务C，将数据修改为值C，trx_id&#x3D;78。</li>
+<li>事务A又进行了查询，发现trx_id大于ReadView中的max_trx_id，说明事务A开启之后，另一个事务更新了数据不可见。然后顺着undo log链找到之前版本，发现是自己修改的，就读出来。</li>
+</ol>
+<h3 id="RC数据隔离机制"><a href="#RC数据隔离机制" class="headerlink" title="RC数据隔离机制"></a>RC数据隔离机制</h3><p>当事务处于RC隔离级别的时候，每次发起查询，都会重新生成一个ReadView.</p>
+<p>重新生成的ReadView，m_ids里的值不会存在已提交事务的id。所以会让当前事务可以读到事务期间提交的数据。</p>
+
             </div>
             <hr>
             <div>

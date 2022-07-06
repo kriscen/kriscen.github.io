@@ -191,6 +191,53 @@
     <article class="col-12 col-md-12 mx-auto index-info">
       <h1 class="index-header">
         
+        <a href="/2022/05/01/JVM/OOM%E4%BC%98%E5%8C%96/" target="_self">
+          OOM优化
+        </a>
+      </h1>
+
+      <p class="index-excerpt">
+        <a href="/2022/05/01/JVM/OOM%E4%BC%98%E5%8C%96/" target="_self">
+          
+          概述可能发生OOM的区域Metaspace发生OOM设置Metaspace大小的参数  -XX:MetaspaceSize&#x3D;512m -XX:MaxMetaspaceSize&#x3D;512m  发生Metaspace OOM的可能问题  Metaspace参数为默认值，导致大型系统运行会OOM 通过cglib等技术动态生成一些类，使用过的话，很容易将Metaspace塞满，引发内存溢
+        </a>
+      </p>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2022-05-01 19:06" pubdate>
+              2022-05-01
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-category"></i>
+            
+              <a href="/categories/Java/">Java</a>
+            
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/JVM/">JVM</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h1 class="index-header">
+        
         <a href="/2022/05/01/JVM/JVM%E4%BC%98%E5%8C%96/" target="_self">
           JVM优化
         </a>
@@ -199,7 +246,7 @@
       <p class="index-excerpt">
         <a href="/2022/05/01/JVM/JVM%E4%BC%98%E5%8C%96/" target="_self">
           
-          
+          JVM工具Jstat介绍可以看到当前运行中的系统JVM内的Eden、Survivor、老年代的内存使用情况，还有Young GC和Full GC的执行次数以及耗时。 开源的工具还有JConsole、VisualVM等监控工具，Jstat为最基础的工具。 命令 jstat -gc PID  首先找到Java进程的PID，然后用这个命令看这个Java进程的内存和GC情况  S0C		From Surv
         </a>
       </p>
 
@@ -246,7 +293,7 @@
       <p class="index-excerpt">
         <a href="/2022/05/01/JVM/GC%E4%B8%8E%E6%97%A5%E5%BF%97%E5%88%86%E6%9E%90/" target="_self">
           
-          
+          GC日志参数 -XX:+PringGCDetails  打印详细的gc日志  -XX:+PrintGCTimeStamps  打印每次出来GC发生的时间  -XLoggc:gc.log  设置将GC写入一个磁盘文件 案例YoungGC案例12345678910111213141516public class JVMDemo1 &amp;#123;    &#x2F;*        -XX:NewSize&#x3D;5242
         </a>
       </p>
 

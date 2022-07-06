@@ -16,13 +16,15 @@
   <meta name="author" content="kris cen">
   <meta name="keywords" content="">
   
-    <meta property="og:type" content="article">
+    <meta name="description" content="Java规定所有变量的赋值操作是原子性诸如 a &#x3D; 1,resource &#x3D; loadResource等直接赋值操作在Java虚拟机的底层是保证了原子性的。但是 i++， a+&#x3D; 1这种语法糖的操作并不是原子性的。 特例32位虚拟机 里面的long&#x2F;double类型的变量的简单赋值写操作，不是原子性。long是64位的，在多线程编发的时候，可能会导致高低位赋">
+<meta property="og:type" content="article">
 <meta property="og:title" content="硬件层面的多线程">
 <meta property="og:url" content="http://example.com/2022/05/14/%E6%BA%90%E7%A0%81/JDK/%E7%A1%AC%E4%BB%B6%E5%B1%82%E9%9D%A2%E7%9A%84%E5%A4%9A%E7%BA%BF%E7%A8%8B/index.html">
 <meta property="og:site_name" content="kris&#39; cabin">
+<meta property="og:description" content="Java规定所有变量的赋值操作是原子性诸如 a &#x3D; 1,resource &#x3D; loadResource等直接赋值操作在Java虚拟机的底层是保证了原子性的。但是 i++， a+&#x3D; 1这种语法糖的操作并不是原子性的。 特例32位虚拟机 里面的long&#x2F;double类型的变量的简单赋值写操作，不是原子性。long是64位的，在多线程编发的时候，可能会导致高低位赋">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2022-05-14T11:10:00.000Z">
-<meta property="article:modified_time" content="2022-07-05T15:30:07.738Z">
+<meta property="article:modified_time" content="2022-07-06T09:52:40.814Z">
 <meta property="article:author" content="kris cen">
 <meta property="article:tag" content="JDK">
 <meta name="twitter:card" content="summary_large_image">
@@ -195,7 +197,7 @@
   
     <span class="post-meta mr-2">
       <i class="iconfont icon-chart"></i>
-      0 字
+      2.9k 字
     </span>
   
 
@@ -204,7 +206,7 @@
       <i class="iconfont icon-clock-fill"></i>
       
       
-      1 分钟
+      25 分钟
     </span>
   
 
@@ -236,7 +238,55 @@
             <h1 style="display: none">硬件层面的多线程</h1>
             
             <div class="markdown-body">
-              
+              <h2 id="Java规定所有变量的赋值操作是原子性"><a href="#Java规定所有变量的赋值操作是原子性" class="headerlink" title="Java规定所有变量的赋值操作是原子性"></a>Java规定所有变量的赋值操作是原子性</h2><p>诸如 a &#x3D; 1,resource &#x3D; loadResource等直接赋值操作在Java虚拟机的底层是保证了原子性的。<br>但是 i++， a+&#x3D; 1这种语法糖的操作并不是原子性的。</p>
+<p>特例<br>32位虚拟机 里面的long&#x2F;double类型的变量的简单赋值写操作，不是原子性。<br>long是64位的，在多线程编发的时候，可能会导致高低位赋值错误。<br>此时对变量加上volatile，可以保证此时的环境下的写操作时原子性的。</p>
+<p>不保障原子性的操作</p>
+<ul>
+<li>i++</li>
+<li>i &#x3D; x*y</li>
+</ul>
+<h2 id="计算机硬件概述"><a href="#计算机硬件概述" class="headerlink" title="计算机硬件概述"></a>计算机硬件概述</h2><h3 id="寄存器"><a href="#寄存器" class="headerlink" title="寄存器"></a>寄存器</h3><p>每个处理器都有自己的寄存器（register），所以多个处理器各自运行一个线程的时候，可能导致某个变量给放到寄存器里去，接着就会导致各个线程没法看到其他处理器寄存器里的变量的值修改了</p>
+<h3 id="写缓冲器"><a href="#写缓冲器" class="headerlink" title="写缓冲器"></a>写缓冲器</h3><p>一个处理器运行的线程对变量的写操作都是针对写缓冲来的（store buffer）并不是直接更新主内存，所以很可能导致一个线程更新了变量，但是仅仅是在写缓冲区里罢了，没有更新到主内存里去</p>
+<h3 id="高速缓存"><a href="#高速缓存" class="headerlink" title="高速缓存"></a>高速缓存</h3><p>一个处理器的线程更新了写缓冲区之后，将更新同步到了自己的高速缓存里（cache，或者是主内存），然后还把这个更新通知给了其他的处理器，但是其他处理器可能就是把这个更新放到无效队列里去，没有更新他的高速缓存</p>
+<h3 id="flush处理器缓存"><a href="#flush处理器缓存" class="headerlink" title="flush处理器缓存"></a>flush处理器缓存</h3><p>flush处理器缓存，他的意思就是把自己更新的值刷新到高速缓存里去（或者是主内存），因为必须要刷到高速缓存（或者是主内存）里，才有可能在后续通过一些特殊的机制让其他的处理器从自己的高速缓存（或者是主内存）里读取到更新的值<br>除了flush以外，他还会发送一个消息到总线（bus），通知其他处理器，某个变量的值被他给修改了</p>
+<h3 id="refresh处理器缓存"><a href="#refresh处理器缓存" class="headerlink" title="refresh处理器缓存"></a>refresh处理器缓存</h3><p>refresh处理器缓存，他的意思就是说，处理器中的线程在读取一个变量的值的时候，如果发现其他处理器的线程更新了变量的值，必须从其他处理器的高速缓存（或者是主内存）里，读取这个最新的值，更新到自己的高速缓存中</p>
+<h2 id="指令重排"><a href="#指令重排" class="headerlink" title="指令重排"></a>指令重排</h2><h3 id="指令重排的层次"><a href="#指令重排的层次" class="headerlink" title="指令重排的层次"></a>指令重排的层次</h3><ol>
+<li>javac静态编译器</li>
+<li>JIT动态编译器</li>
+<li>处理器执行顺序</li>
+<li>内存重排序<ol>
+<li>写缓冲器</li>
+<li>高数缓存</li>
+<li>无效队列<h3 id="处理器的指令乱序机制"><a href="#处理器的指令乱序机制" class="headerlink" title="处理器的指令乱序机制"></a>处理器的指令乱序机制</h3>指令不一定说是拿到了一个指令立马可以执行的，比如有的指令是要进行网络通信、磁盘读写，获取锁，很多种，有的指令不是立马就绪可以执行的，为了提升效率，在现代处理器里面都是走的指令的乱序执行机制<br>把编译好的指令一条一条读取到处理器里，但是哪个指令先就绪可以执行，就先执行，不是按照代码顺序来的。每个指令的结果放到一个重排序处理器中，重排序处理器把各个指令的结果按照代码顺序应用到主内存或者写缓冲器里</li>
+</ol>
+</li>
+</ol>
+<h3 id="处理器的推测执行"><a href="#处理器的推测执行" class="headerlink" title="处理器的推测执行"></a>处理器的推测执行</h3><p>预先执行下一步，在执行上一步的判断，如果判断不为真，就舍弃后面预执行的结果。</p>
+<h3 id="内存重排序"><a href="#内存重排序" class="headerlink" title="内存重排序"></a>内存重排序</h3><p>处理器会将数据写入写缓冲器，这个过程是store；从高速缓存里读数据，这个过程是load。写缓冲器和高速缓存执行load和store的过程，都是按照处理器指示的顺序来的，处理器的重排处理器也是按照程序顺序来load和store的。<br>但是在其他处理器可能回档到load和store是重排序的。这种就是内存重排序</p>
+<p>内存重排序的四种可能</p>
+<ol>
+<li>LoadLoad重排序：一个处理器先执行一个L1读操作，再执行一个L2读操作；但是另外一个处理器看到的是先L2再L1</li>
+<li>StoreStore重排序：一个处理器先执行一个W1写操作，再执行一个W2写操作；但是另外一个处理器看到的是先W2再W1</li>
+<li>LoadStore重排序：一个处理器先执行一个L1读操作，再执行一个W2写操作；但是另外一个处理器看到的是先W2再L1</li>
+<li>StoreLoad重排序：一个处理器先执行一个W1写操作，再执行一个L2读操作；但是另外一个处理器看到的是先L2再W1</li>
+</ol>
+<h2 id="内存屏障"><a href="#内存屏障" class="headerlink" title="内存屏障"></a>内存屏障</h2><p>按可见性分，内存屏障可以分为Load屏障和Store屏障</p>
+<h3 id="Load屏障"><a href="#Load屏障" class="headerlink" title="Load屏障"></a>Load屏障</h3><p>执行refresh处理器缓存的操作，就是对别的处理器更新过的变量，从其他处理器的高速缓存（或者主内存）加载数据到自己的高数缓存来，确保自己看到的是最新的数据。</p>
+<h3 id="Store屏障"><a href="#Store屏障" class="headerlink" title="Store屏障"></a>Store屏障</h3><p>执行flush处理器缓存的操作，把自己当前处理器更新的变量的值都刷新到高速缓存（或者主内存）中</p>
+<p>按照有序性分，内存屏障还可以分为Acquire屏障和Release屏障</p>
+<h3 id="Acquire屏障"><a href="#Acquire屏障" class="headerlink" title="Acquire屏障"></a>Acquire屏障</h3><p>禁止读操作和读写操作之间发生指令重排序</p>
+<h3 id="Release屏障"><a href="#Release屏障" class="headerlink" title="Release屏障"></a>Release屏障</h3><p>禁止写操作和读写操作之间发成指令重排序</p>
+<h2 id="synchronized的保证"><a href="#synchronized的保证" class="headerlink" title="synchronized的保证"></a>synchronized的保证</h2><p>synchronized可以同时保证原子性、可见性、有序性</p>
+<h3 id="原子性"><a href="#原子性" class="headerlink" title="原子性"></a>原子性</h3><p>synchronized存在加锁和释放锁的机制保证原子性。</p>
+<p><a target="_blank" rel="noopener" href="https://www.processon.com/view/link/62466d535653bb072bd26a61">点击查看【processon】</a></p>
+<h3 id="可见性"><a href="#可见性" class="headerlink" title="可见性"></a>可见性</h3><p>synchronized在同步代码块里面，对变量的写操作，在释放锁的时候，全部强制执行flush操作。<br>在进入代码块的时候，对所有变量的读操作，全部执行refresh操作</p>
+<p>如果用了synchronized关键字，在底层编译后，JVM指令中会有monitorenter和monitorexit指令。<br>在monitorenter指令之后，会加一个Load屏障，执行refresh操作，把别的处理器修改过的最新值加载到自己的高速缓存中。<br>在monitorexit指令之后，会加一个Sotre屏障，让线程把自己在同步代码块里修改的变量的值都执行flush操作，刷到高速缓存（或者主内存中。）</p>
+<h3 id="有序性"><a href="#有序性" class="headerlink" title="有序性"></a>有序性</h3><p>synchronized会通过加内存屏障解决内存重排序<br>在monitorenter指令之后，Load屏障之后，会加一个Acquire屏障。<br>在monitorexit指令之前，会加一个Release屏障。<br>保证同步代码块内部的指令可以重排，但是同步代码块内部的指令和外面的指令是不能重排的</p>
+<h2 id="volatile的保证"><a href="#volatile的保证" class="headerlink" title="volatile的保证"></a>volatile的保证</h2><p>在volatile变量写操作的前面会加入一个Release屏障，然后在之后会加入一个Store屏障，这样就可以保证volatile写跟Release屏障之前的任何读写操作都不会指令重排，然后Store屏障保证了，写完数据之后，立马会执行flush处理器缓存的操作</p>
+<p>在volatile变量读操作的前面会加入一个Load屏障，这样就可以保证对这个变量的读取时，如果被别的处理器修改过了，必须得从其他处理器的高速缓存（或者主内存）中加载到自己本地高速缓存里，保证读到的是最新数据；在之后会加入一个Acquire屏障，禁止volatile读操作之后的任何读写操作会跟volatile读指令重排序</p>
+<h2 id="高速缓存-1"><a href="#高速缓存-1" class="headerlink" title="高速缓存"></a>高速缓存</h2><p>那么处理器在读写高速缓存的时候，实际上会根据变量名执行一个内存地址解码的操作，解析出来3个东西，index、tag和offset。index用于定位到拉链散列表中的某个bucket，tag是用于定位cache entry，offset是用于定位一个变量在cache line中的位置</p>
+<p>如果说可以成功定位到一个高速缓存中的数据，而且flag还标志着有效，则缓存命中；否则不满足上述条件，就是缓存未命中。如果是读数据未命中的话，会从主内存重新加载数据到高速缓存中，现在处理器一般都有三级高速缓存，L1、L2、L3，越靠前面的缓存读写速度越快<br><a target="_blank" rel="noopener" href="https://www.processon.com/view/link/6246791c07912907096ee231">点击查看【processon】</a></p>
+<h2 id="Java虚拟机对锁的优化"><a href="#Java虚拟机对锁的优化" class="headerlink" title="Java虚拟机对锁的优化"></a>Java虚拟机对锁的优化</h2>
             </div>
             <hr>
             <div>

@@ -16,13 +16,15 @@
   <meta name="author" content="kris cen">
   <meta name="keywords" content="">
   
-    <meta property="og:type" content="article">
+    <meta name="description" content="一、eureka server端整合 eureka server注解为@EnableEurekaServer，其中引入EurekaServerMarkerConfiguration，其又依赖于EurekaServerAutoConfiguration。 其中初始化了bean：EurekaServerConfigBean,实现了EurekaServerConfig接口，将默认参数可以按yml中配置替">
+<meta property="og:type" content="article">
 <meta property="og:title" content="Spring整合eureka">
 <meta property="og:url" content="http://example.com/2022/05/07/%E6%BA%90%E7%A0%81/eureka/spring%E6%95%B4%E5%90%88eureka/index.html">
 <meta property="og:site_name" content="kris&#39; cabin">
+<meta property="og:description" content="一、eureka server端整合 eureka server注解为@EnableEurekaServer，其中引入EurekaServerMarkerConfiguration，其又依赖于EurekaServerAutoConfiguration。 其中初始化了bean：EurekaServerConfigBean,实现了EurekaServerConfig接口，将默认参数可以按yml中配置替">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2022-05-07T11:07:00.000Z">
-<meta property="article:modified_time" content="2022-07-05T15:22:57.647Z">
+<meta property="article:modified_time" content="2022-07-06T09:29:05.229Z">
 <meta property="article:author" content="kris cen">
 <meta property="article:tag" content="eureka">
 <meta name="twitter:card" content="summary_large_image">
@@ -195,7 +197,7 @@
   
     <span class="post-meta mr-2">
       <i class="iconfont icon-chart"></i>
-      0 字
+      334 字
     </span>
   
 
@@ -204,7 +206,7 @@
       <i class="iconfont icon-clock-fill"></i>
       
       
-      1 分钟
+      3 分钟
     </span>
   
 
@@ -236,7 +238,12 @@
             <h1 style="display: none">Spring整合eureka</h1>
             
             <div class="markdown-body">
-              
+              <h1 id="一、eureka-server端整合"><a href="#一、eureka-server端整合" class="headerlink" title="一、eureka server端整合"></a>一、eureka server端整合</h1><ol>
+<li>eureka server注解为<code>@EnableEurekaServer</code>，其中引入<code>EurekaServerMarkerConfiguration</code>，其又依赖于<code>EurekaServerAutoConfiguration</code>。</li>
+<li>其中初始化了bean：<code>EurekaServerConfigBean</code>,实现了<code>EurekaServerConfig</code>接口，将默认参数可以按yml中配置替换</li>
+<li>在<code>EurekaServerAutoConfiguration</code>中又引入了<code>EurekaServerInitializerConfiguration</code>作为初始化配置。在此处会启动一个线程去调用<code>EurekaServerBootstrap</code>原生初始化方法</li>
+</ol>
+<h1 id="二、eureka-client端整合"><a href="#二、eureka-client端整合" class="headerlink" title="二、eureka client端整合"></a>二、eureka client端整合</h1>
             </div>
             <hr>
             <div>

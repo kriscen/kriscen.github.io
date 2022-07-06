@@ -199,7 +199,7 @@
       <p class="index-excerpt">
         <a href="/2022/05/16/%E6%BA%90%E7%A0%81/%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/zookeeper%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/" target="_self">
           
-          
+          zookepper使用curator框架实现分布式锁  一、可重入锁二、 Semphore三、非可重入锁四、可重入读写锁五、MultiLock
         </a>
       </p>
 
@@ -246,7 +246,7 @@
       <p class="index-excerpt">
         <a href="/2022/05/16/%E6%BA%90%E7%A0%81/%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/redis%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/" target="_self">
           
-          
+          redis基于redisson实现的锁机制  一、可重入锁1. 加锁2. watchdog维持加锁3. 可重入加锁4. 锁的互斥阻塞5. 锁释放6. 锁超时与自动释放7. 可重入锁总结二、公平锁1. 排队加锁2. 可重入加锁3. 排队分数刷新4. 队列重排5. 释放锁6. 按顺序依次加锁三、MultiLock四、RedLock五、读写锁1. 加读锁2. 加写锁3. 读锁与读锁非互斥4. 读锁与写
         </a>
       </p>
 
@@ -293,7 +293,7 @@
       <p class="index-excerpt">
         <a href="/2022/05/16/%E6%BA%90%E7%A0%81/%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81%E6%A6%82%E8%BF%B0/" target="_self">
           
-          
+          常见的分布式锁的实现分为两种  redis实现 Zookeeper实现  redis分布式锁 redis单实例  不靠谱，redis存在单点故障，会导致系统崩溃，做不到高可用。  redis主从架构+哨兵模式  保证高可用，并且master宕机之后，slave可以接替。但是存在隐患：master宕机的时候，还没有异步复制锁到slave，导致重复加锁问题。  redis多master集群  redi
         </a>
       </p>
 
@@ -340,7 +340,7 @@
       <p class="index-excerpt">
         <a href="/2022/05/15/%E6%BA%90%E7%A0%81/%E4%BA%8B%E5%8A%A1/%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1%E6%96%B9%E6%A1%88/" target="_self">
           
-          
+          一、分布式事务方案1. 二阶段提交方案&#x2F;XA方案【事务】单系统多数据源事务概述 2. TCC方案TCC全称为Try、Confirm、Cancel  Try阶段：对各个服务的资源做检测以及对资源进行锁定或者预留 Confirm阶段：在各个服务中执行实际的操作 Cancel阶段：如果任何一个服务的业务方法执行出错，那么这里就需要进行补偿，就是执行已经成功的业务逻辑的回滚操作  适合场景：强一
         </a>
       </p>
 
@@ -387,7 +387,7 @@
       <p class="index-excerpt">
         <a href="/2022/05/15/%E6%BA%90%E7%A0%81/%E4%BA%8B%E5%8A%A1/%E5%8D%95%E7%B3%BB%E7%BB%9F%E5%A4%9A%E6%95%B0%E6%8D%AE%E6%BA%90%E4%BA%8B%E5%8A%A1/" target="_self">
           
-          
+          一. XA规范X&#x2F;Open定义了的组织定义了分布式事务的模型，其中包含以下角色  AP(Application )应用程序 TM(Transaction Manager)事务管理器 RM(Resource Manager)资源管理器 CRM(Communication Resource Manager)通信资源管理器  通俗的将上述角色对应现在系统AP -&gt; 系统TM -&gt;
         </a>
       </p>
 
@@ -434,7 +434,7 @@
       <p class="index-excerpt">
         <a href="/2022/05/15/%E6%BA%90%E7%A0%81/%E4%BA%8B%E5%8A%A1/Spring-tx%E4%BA%8B%E5%8A%A1/" target="_self">
           
-          
+          Spring事务相关包在spring-tx包下面，具体实现在org.springframework.transaction.interceptor.TransactionAspectSupport#invokeWithinTransaction。 1234567891011121314151617181920212223242526272829303132333435363738394041424
         </a>
       </p>
 
@@ -481,7 +481,7 @@
       <p class="index-excerpt">
         <a href="/2022/05/15/%E6%BA%90%E7%A0%81/%E4%BA%8B%E5%8A%A1/%E4%BA%8B%E5%8A%A1%E6%A6%82%E8%BF%B0/" target="_self">
           
-          
+          一、事务的ACID1. Atomic原子性一堆sql要么一起成功，要么全部失败 2. Consistency一致性针对一组SQL执行之前，数据是准确的，执行之后的数据也必须是准确的 3. Isolation隔离性多事务之间是存在事务隔离，互不影响 4.Durability持久性事务成功之后，对数据的修改时永久有效的 二、事务隔离级别1. 读未提交 Read Uncommitted某个事务还未提交的
         </a>
       </p>
 
@@ -528,7 +528,7 @@
       <p class="index-excerpt">
         <a href="/2022/05/14/%E6%BA%90%E7%A0%81/JDK/CompletableFuture/" target="_self">
           
-          
+          FutureFuture接口(FutureTask实现类)定义了操作异步任务执行一些方法，如获取异步任务的执行结果、取消任务的执行、判断任务是否被取消、判断任务是否执行完毕等。Future接口可以为主线程开一个分支任务 优点  future+线程池异步多线程任务配合，可以显著提高程序的执行效率  缺点future对于结果的获取不友好，只能通过阻塞或者轮询的方式得到任务结果  get()会进行阻塞
         </a>
       </p>
 
@@ -575,7 +575,7 @@
       <p class="index-excerpt">
         <a href="/2022/05/14/%E6%BA%90%E7%A0%81/JDK/%E7%BA%BF%E7%A8%8B%E6%B1%A0/" target="_self">
           
-          
+          核心变量corePoolSizemaximumPoolSizekeepAliveTimeTimeUnitBlockingQueueThreadFactoryRejectedExecutionHandlerctl1private final AtomicInteger ctl &#x3D; new AtomicInteger(ctlOf(RUNNING, 0)); 通过32位的Integer的数字代表了线程池
         </a>
       </p>
 
@@ -622,7 +622,7 @@
       <p class="index-excerpt">
         <a href="/2022/05/14/%E6%BA%90%E7%A0%81/JDK/%E7%A1%AC%E4%BB%B6%E5%B1%82%E9%9D%A2%E7%9A%84%E5%A4%9A%E7%BA%BF%E7%A8%8B/" target="_self">
           
-          
+          Java规定所有变量的赋值操作是原子性诸如 a &#x3D; 1,resource &#x3D; loadResource等直接赋值操作在Java虚拟机的底层是保证了原子性的。但是 i++， a+&#x3D; 1这种语法糖的操作并不是原子性的。 特例32位虚拟机 里面的long&#x2F;double类型的变量的简单赋值写操作，不是原子性。long是64位的，在多线程编发的时候，可能会导致高低位赋
         </a>
       </p>
 

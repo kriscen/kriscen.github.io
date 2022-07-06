@@ -16,16 +16,20 @@
   <meta name="author" content="kris cen">
   <meta name="keywords" content="">
   
-    <meta property="og:type" content="article">
+    <meta name="description" content="FutureFuture接口(FutureTask实现类)定义了操作异步任务执行一些方法，如获取异步任务的执行结果、取消任务的执行、判断任务是否被取消、判断任务是否执行完毕等。Future接口可以为主线程开一个分支任务 优点  future+线程池异步多线程任务配合，可以显著提高程序的执行效率  缺点future对于结果的获取不友好，只能通过阻塞或者轮询的方式得到任务结果  get()会进行阻塞">
+<meta property="og:type" content="article">
 <meta property="og:title" content="CompletableFuture">
 <meta property="og:url" content="http://example.com/2022/05/14/%E6%BA%90%E7%A0%81/JDK/CompletableFuture/index.html">
 <meta property="og:site_name" content="kris&#39; cabin">
+<meta property="og:description" content="FutureFuture接口(FutureTask实现类)定义了操作异步任务执行一些方法，如获取异步任务的执行结果、取消任务的执行、判断任务是否被取消、判断任务是否执行完毕等。Future接口可以为主线程开一个分支任务 优点  future+线程池异步多线程任务配合，可以显著提高程序的执行效率  缺点future对于结果的获取不友好，只能通过阻塞或者轮询的方式得到任务结果  get()会进行阻塞">
 <meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://cdn.nlark.com/yuque/0/2022/png/12966419/1655654616406-d2dcf550-d3a2-4f4b-ba4e-c49c8739bae7.png#clientId=u827c53c4-0219-4&crop=0&crop=0&crop=1&crop=1&from=paste&height=275&id=ufd36635f&margin=%5Bobject%20Object%5D&name=image.png&originHeight=275&originWidth=724&originalType=binary&ratio=1&rotation=0&showTitle=false&size=148662&status=done&style=none&taskId=u2ff821d8-346f-492e-a4db-d4b576c9c8e&title=&width=724">
 <meta property="article:published_time" content="2022-05-14T11:12:00.000Z">
-<meta property="article:modified_time" content="2022-07-05T15:30:33.557Z">
+<meta property="article:modified_time" content="2022-07-06T09:52:18.496Z">
 <meta property="article:author" content="kris cen">
 <meta property="article:tag" content="JDK">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://cdn.nlark.com/yuque/0/2022/png/12966419/1655654616406-d2dcf550-d3a2-4f4b-ba4e-c49c8739bae7.png#clientId=u827c53c4-0219-4&crop=0&crop=0&crop=1&crop=1&from=paste&height=275&id=ufd36635f&margin=%5Bobject%20Object%5D&name=image.png&originHeight=275&originWidth=724&originalType=binary&ratio=1&rotation=0&showTitle=false&size=148662&status=done&style=none&taskId=u2ff821d8-346f-492e-a4db-d4b576c9c8e&title=&width=724">
   
   
   <title>CompletableFuture - kris&#39; cabin</title>
@@ -195,7 +199,7 @@
   
     <span class="post-meta mr-2">
       <i class="iconfont icon-chart"></i>
-      0 字
+      1.5k 字
     </span>
   
 
@@ -204,7 +208,7 @@
       <i class="iconfont icon-clock-fill"></i>
       
       
-      1 分钟
+      13 分钟
     </span>
   
 
@@ -236,7 +240,22 @@
             <h1 style="display: none">CompletableFuture</h1>
             
             <div class="markdown-body">
-              
+              <h2 id="Future"><a href="#Future" class="headerlink" title="Future"></a>Future</h2><p>Future接口(FutureTask实现类)定义了操作异步任务执行一些方法，如获取异步任务的执行结果、取消任务的执行、判断任务是否被取消、判断任务是否执行完毕等。<br>Future接口可以为主线程开一个分支任务</p>
+<p>优点</p>
+<ul>
+<li>future+线程池异步多线程任务配合，可以显著提高程序的执行效率</li>
+</ul>
+<p>缺点<br>future对于结果的获取不友好，只能通过阻塞或者轮询的方式得到任务结果</p>
+<ul>
+<li>get()会进行阻塞</li>
+<li>isDone()轮询会导致CPU空转<figure class="highlight java"><table><tr><td class="gutter"><div class="code-wrapper"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></div></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">main</span><span class="hljs-params">(String[] args)</span> <span class="hljs-keyword">throws</span> ExecutionException, InterruptedException &#123;<br>    <span class="hljs-keyword">final</span> FutureTask&lt;String&gt; futureTask = <span class="hljs-keyword">new</span> <span class="hljs-title class_">FutureTask</span>&lt;&gt;(<span class="hljs-keyword">new</span> <span class="hljs-title class_">MyThread</span>());<br><br>    <span class="hljs-keyword">final</span> <span class="hljs-type">Thread</span> <span class="hljs-variable">t1</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">Thread</span>(futureTask, <span class="hljs-string">&quot;t1&quot;</span>);<br><br>    t1.start();<br><br>    <span class="hljs-keyword">final</span> <span class="hljs-type">String</span> <span class="hljs-variable">s</span> <span class="hljs-operator">=</span> futureTask.get();<br>    System.out.println(s);<br><br>&#125;<br></code></pre></td></tr></table></figure>
+<h2 id="CompletableFuture"><a href="#CompletableFuture" class="headerlink" title="CompletableFuture"></a>CompletableFuture</h2>提供一种观察者模式的机制，让任务执行完后可以通知监听的一方<br><img src="https://cdn.nlark.com/yuque/0/2022/png/12966419/1655654616406-d2dcf550-d3a2-4f4b-ba4e-c49c8739bae7.png#clientId=u827c53c4-0219-4&crop=0&crop=0&crop=1&crop=1&from=paste&height=275&id=ufd36635f&margin=%5Bobject%20Object%5D&name=image.png&originHeight=275&originWidth=724&originalType=binary&ratio=1&rotation=0&showTitle=false&size=148662&status=done&style=none&taskId=u2ff821d8-346f-492e-a4db-d4b576c9c8e&title=&width=724" srcset="/img/loading.gif" lazyload alt="image.png"></li>
+</ul>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">main</span><span class="hljs-params">(String[] args)</span> <span class="hljs-keyword">throws</span> InterruptedException &#123;<br>    <span class="hljs-keyword">final</span> <span class="hljs-type">ExecutorService</span> <span class="hljs-variable">pool</span> <span class="hljs-operator">=</span> Executors.newFixedThreadPool(<span class="hljs-number">3</span>);<br>    <span class="hljs-keyword">try</span> &#123;<br>        CompletableFuture.supplyAsync(()-&gt;&#123;<br>            System.out.println(Thread.currentThread().getName()+<span class="hljs-string">&quot;come in&quot;</span>);<br>            <span class="hljs-type">int</span> <span class="hljs-variable">result</span> <span class="hljs-operator">=</span> ThreadLocalRandom.current().nextInt(<span class="hljs-number">10</span>);<br>            <span class="hljs-keyword">try</span> &#123;<br>                TimeUnit.SECONDS.sleep(<span class="hljs-number">1</span>);<br>            &#125; <span class="hljs-keyword">catch</span> (InterruptedException e) &#123;<br>                e.printStackTrace();<br>            &#125;<br>            System.out.println(<span class="hljs-string">&quot;1s后出结果&quot;</span>);<br>            <span class="hljs-keyword">return</span> result;<br>        &#125;,pool).whenComplete((v,e)-&gt;&#123;<br>            <span class="hljs-keyword">if</span>(e == <span class="hljs-literal">null</span>)&#123;<br>                System.out.println(<span class="hljs-string">&quot;计算完成 结果为：&quot;</span>+v);<br>            &#125;<br>        &#125;).exceptionally(e-&gt;&#123;<br>            e.printStackTrace();<br>            System.out.println(<span class="hljs-string">&quot;异常情况&quot;</span>);<br>            <span class="hljs-keyword">return</span> <span class="hljs-literal">null</span>;<br>        &#125;);<br>        System.out.println(<span class="hljs-string">&quot;处理其他事情&quot;</span>);<br><br>        <span class="hljs-comment">//forkjoin是守护线程，需要主线程不能直接结束</span><br>        <span class="hljs-comment">//        TimeUnit.SECONDS.sleep(3);</span><br>    &#125;<span class="hljs-keyword">catch</span>(Exception e) &#123;<br>        e.printStackTrace();<br>    &#125;<span class="hljs-keyword">finally</span> &#123;<br>        pool.shutdown();<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+
+
+
             </div>
             <hr>
             <div>

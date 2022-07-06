@@ -16,16 +16,22 @@
   <meta name="author" content="kris cen">
   <meta name="keywords" content="">
   
-    <meta property="og:type" content="article">
+    <meta name="description" content="CPU缓存模型多个线程读取主内存变量，导致性能变差，计算性能变差  总线加锁机制最开始的加锁机制，某个CPU如果要读取一个数据，会通过一个总线，对这个数据加一个锁，其他的CPU就没发去读和写这个数据，只有当这个CPU修改完之后，其他CPU可以读取到最新的数据。 这个会导致执行的串行化，多个CPU并发运行的时候，效率很差。 MESI协议(缓存一致性协议)   状态 描述    M（Modified）">
+<meta property="og:type" content="article">
 <meta property="og:title" content="volatile">
 <meta property="og:url" content="http://example.com/2022/05/14/%E6%BA%90%E7%A0%81/JDK/volatile/index.html">
 <meta property="og:site_name" content="kris&#39; cabin">
+<meta property="og:description" content="CPU缓存模型多个线程读取主内存变量，导致性能变差，计算性能变差  总线加锁机制最开始的加锁机制，某个CPU如果要读取一个数据，会通过一个总线，对这个数据加一个锁，其他的CPU就没发去读和写这个数据，只有当这个CPU修改完之后，其他CPU可以读取到最新的数据。 这个会导致执行的串行化，多个CPU并发运行的时候，效率很差。 MESI协议(缓存一致性协议)   状态 描述    M（Modified）">
 <meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://cdn.nlark.com/yuque/0/2022/jpeg/12966419/1648190481301-50a66364-2d88-458e-819f-23e6bdce8e8f.jpeg">
+<meta property="og:image" content="https://cdn.nlark.com/yuque/0/2022/jpeg/12966419/1648190514096-b3294322-2399-469d-ad6e-3cd46832211e.jpeg">
+<meta property="og:image" content="https://cdn.nlark.com/yuque/0/2022/jpeg/12966419/1648192365033-b280f9d9-7a08-4cd1-87c8-caa3f06ead04.jpeg">
 <meta property="article:published_time" content="2022-05-14T11:03:00.000Z">
-<meta property="article:modified_time" content="2022-07-05T15:26:33.788Z">
+<meta property="article:modified_time" content="2022-07-06T09:53:39.933Z">
 <meta property="article:author" content="kris cen">
 <meta property="article:tag" content="JDK">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://cdn.nlark.com/yuque/0/2022/jpeg/12966419/1648190481301-50a66364-2d88-458e-819f-23e6bdce8e8f.jpeg">
   
   
   <title>volatile - kris&#39; cabin</title>
@@ -195,7 +201,7 @@
   
     <span class="post-meta mr-2">
       <i class="iconfont icon-chart"></i>
-      0 字
+      2k 字
     </span>
   
 
@@ -204,7 +210,7 @@
       <i class="iconfont icon-clock-fill"></i>
       
       
-      1 分钟
+      17 分钟
     </span>
   
 
@@ -236,7 +242,128 @@
             <h1 style="display: none">volatile</h1>
             
             <div class="markdown-body">
-              
+              <h2 id="CPU缓存模型"><a href="#CPU缓存模型" class="headerlink" title="CPU缓存模型"></a>CPU缓存模型</h2><p><img src="https://cdn.nlark.com/yuque/0/2022/jpeg/12966419/1648190481301-50a66364-2d88-458e-819f-23e6bdce8e8f.jpeg" srcset="/img/loading.gif" lazyload><br>多个线程读取主内存变量，导致性能变差，计算性能变差</p>
+<p><img src="https://cdn.nlark.com/yuque/0/2022/jpeg/12966419/1648190514096-b3294322-2399-469d-ad6e-3cd46832211e.jpeg" srcset="/img/loading.gif" lazyload></p>
+<h2 id="总线加锁机制"><a href="#总线加锁机制" class="headerlink" title="总线加锁机制"></a>总线加锁机制</h2><p>最开始的加锁机制，某个CPU如果要读取一个数据，会通过一个总线，对这个数据加一个锁，其他的CPU就没发去读和写这个数据，只有当这个CPU修改完之后，其他CPU可以读取到最新的数据。</p>
+<p>这个会导致执行的串行化，多个CPU并发运行的时候，效率很差。</p>
+<h2 id="MESI协议-缓存一致性协议"><a href="#MESI协议-缓存一致性协议" class="headerlink" title="MESI协议(缓存一致性协议)"></a>MESI协议(缓存一致性协议)</h2><table>
+<thead>
+<tr>
+<th>状态</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>M（Modified）</td>
+<td>这行数据有效，数据被修改了，和内存中的数据不一致，数据只存在于本cache中</td>
+</tr>
+<tr>
+<td>E（Exclusive）</td>
+<td>这行数据有效，数据和内存中的数据一致，数据只存在于本cache中。</td>
+</tr>
+<tr>
+<td>S（Shared）</td>
+<td>这行数据有效，数据和内存中的数据一致，数据存在于很多cache中</td>
+</tr>
+<tr>
+<td>I（Invalid）</td>
+<td>这行数据无效</td>
+</tr>
+</tbody></table>
+<h2 id="Java内存模型"><a href="#Java内存模型" class="headerlink" title="Java内存模型"></a>Java内存模型</h2><p>基于CPU缓存模型来建立的Java内存模型，只不过Java的内存模型是标准化，屏蔽掉底层不同计算机的区别。<br>线程之间的共享变量存储在主存中，每个线程都有一个私有的工作内存，工作内存中存储了该线程用于读写共享变量的副本。</p>
+<table>
+<thead>
+<tr>
+<th>read</th>
+<th>从主存中读取到的值写入工作内存</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>load</td>
+<td>将主存读取到的值写入工作内存</td>
+</tr>
+<tr>
+<td>use</td>
+<td>从工作内存读取数据来计算</td>
+</tr>
+<tr>
+<td>assign</td>
+<td>将计算好的值重新赋值到工作内存中</td>
+</tr>
+<tr>
+<td>store</td>
+<td>将工作内存数据写入主存</td>
+</tr>
+<tr>
+<td>write</td>
+<td>将store过去的变量赋值给主存中的变量</td>
+</tr>
+</tbody></table>
+<p><img src="https://cdn.nlark.com/yuque/0/2022/jpeg/12966419/1648192365033-b280f9d9-7a08-4cd1-87c8-caa3f06ead04.jpeg" srcset="/img/loading.gif" lazyload></p>
+<h2 id="Java内存模型的并发特点"><a href="#Java内存模型的并发特点" class="headerlink" title="Java内存模型的并发特点"></a>Java内存模型的并发特点</h2><h3 id="可见性"><a href="#可见性" class="headerlink" title="可见性"></a>可见性</h3><p>不能保证。<br>因为只有主内存中的数据，才是线程共享的区域。</p>
+<h3 id="原子性"><a href="#原子性" class="headerlink" title="原子性"></a>原子性</h3><p>不能保证。<br>对于一个操作，比如i++，多个线程同时执行的情况下，最终结果不能保证为2。多个线程在同时read，load为0的情况下，i++变为1，然后assign，stoer，write回去导致主存中的i变为1。</p>
+<h3 id="有序性"><a href="#有序性" class="headerlink" title="有序性"></a>有序性</h3><p>不能保证。<br>底层编译器为了提高代码的执行效率，会对代码进行指令重排。这样的话，就会导致我们代码执行是有顺序性问题的。</p>
+<h2 id="volatile"><a href="#volatile" class="headerlink" title="volatile"></a>volatile</h2><h3 id="作用"><a href="#作用" class="headerlink" title="作用"></a>作用</h3><p>保证可见性，一定程度的有序性</p>
+<h3 id="工作原理"><a href="#工作原理" class="headerlink" title="工作原理"></a>工作原理</h3><p>添加volatile关键字以后，JVM底层在线程1工作内存计算完数据之后，会向CPU发送一条Lock为前缀的指令，该指令会让线程1工作内存的数据立即刷新到主内存中。通过MESI缓存一致性协议，其他线程同时会嗅探主内存中的数据，一旦发现数据被修改过了，会对工作内存的数据进行失效。这样的话，当线程2再次要使用变量i的数据，发现自己工作内存中的变量i已经失效了，此时就会重新从主内存中加载，就可以看到线程1更新的数据了。</p>
+<h2 id="happens-before"><a href="#happens-before" class="headerlink" title="happens-before"></a>happens-before</h2><p>编译器、指令器可能对代码重排序，乱排，要守一定的规则，happens-before原则，只要符合happens-before的原则，那么就不能胡乱重排，如果不符合这些规则的话，那就可以自己排序</p>
+<ul>
+<li><strong>程序次序规则</strong></li>
+</ul>
+<p>一个线程内，按照代码顺序，书写在前面的操作先行发生于书写在后面的操作</p>
+<ul>
+<li><strong>锁定规则</strong></li>
+</ul>
+<p>一个unLock操作先行发生于后面对同一个锁的lock操作</p>
+<ul>
+<li><strong>volatile变量规则</strong></li>
+</ul>
+<p>对一个变量的写操作先行发生于后面对这个变量的读操作，volatile变量写，再是读，必须保证是先写，再读</p>
+<ul>
+<li><strong>传递规则</strong></li>
+</ul>
+<p>如果操作A先行发生于操作B，而操作B又先行发生于操作C，则可以得出操作A先行发生于操作C</p>
+<ul>
+<li><strong>线程启动规则</strong></li>
+</ul>
+<p>Thread对象的start()方法先行发生于此线程的每个一个动作</p>
+<ul>
+<li><strong>线程中断规则</strong></li>
+</ul>
+<p>对线程interrupt()方法的调用先行发生于被中断线程的代码检测到中断事件的发生</p>
+<ul>
+<li><strong>线程终结规则</strong></li>
+</ul>
+<p>线程中所有的操作都先行发生于线程的终止，我们可以通过Thread.join()方法结束、Thread.isAlive()的返回值手段检测到线程已经终止执行</p>
+<ul>
+<li><strong>对象终结规则</strong></li>
+</ul>
+<p>一个对象的初始化完成先行发生于他的finalize()方法的开始</p>
+<h2 id="Java屏障"><a href="#Java屏障" class="headerlink" title="Java屏障"></a>Java屏障</h2><ul>
+<li>LoadLoad屏障</li>
+</ul>
+<p>Load1;LoadLoad;Load2，确保Load1数据的装载先鱼Load2后所有装载指令</p>
+<ul>
+<li>StoreStore屏障</li>
+</ul>
+<p>Store1;StoreStore;Store2,确保Store1的数据一定刷回主存，对其他cpu可见，先于Store2以及后续指令</p>
+<ul>
+<li>LoadStore屏障</li>
+</ul>
+<p>Load1;LoadStore;Store2,确保Load1指令的数据装载先于Store2以及后续指令</p>
+<ul>
+<li>StoreLoad屏障</li>
+</ul>
+<p>Store1;StoreLoad;Load2,确保Store1指令的数据一定刷回主存，对其他cpu可见，先于Load2以及后续指令的数据装载</p>
+<h2 id="volatile底层原理"><a href="#volatile底层原理" class="headerlink" title="volatile底层原理"></a>volatile底层原理</h2><p>volatile底层本质是基于一些内存屏障来保证有序性的</p>
+<ol>
+<li><p>volatile的写操作</p>
+<p> Volatile写操作前后，分别会添加storestore内存屏障，storeload内存屏障<br> 这样的话，volatile变量的写操作就不会和前面的写操作，和后面的读操作交换顺序了</p>
+</li>
+<li><p>volatile的读操作</p>
+<p> 在volatile的读操作之后，会添加loadload、loadstore内存屏障<br> 这样的话，volatile的读操作就不会和后面的读写操作交换顺序了</p>
+</li>
+</ol>
+
             </div>
             <hr>
             <div>

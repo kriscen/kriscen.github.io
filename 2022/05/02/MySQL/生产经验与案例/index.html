@@ -16,16 +16,20 @@
   <meta name="author" content="kris cen">
   <meta name="keywords" content="">
   
-    <meta property="og:type" content="article">
+    <meta name="description" content="生产经验IO调度优化IO调度算法：  CFQ公平调度算法  按照执行顺序，进行IO调度。可能会出现小数据量sql排队在大数据量sql后面，导致延迟很久  deadline调度算法 (MySQL推荐算法)  任何一个IO操作都不能一直不停的等待，在指定时间范围内，都必须让他执行 RAID存储架构RAID就是一个磁盘冗余阵列。服务器放了多块磁盘，使用RAID进行机器磁盘管理。RAID可以实现数据冗余机">
+<meta property="og:type" content="article">
 <meta property="og:title" content="生产经验与案例">
 <meta property="og:url" content="http://example.com/2022/05/02/MySQL/%E7%94%9F%E4%BA%A7%E7%BB%8F%E9%AA%8C%E4%B8%8E%E6%A1%88%E4%BE%8B/index.html">
 <meta property="og:site_name" content="kris&#39; cabin">
+<meta property="og:description" content="生产经验IO调度优化IO调度算法：  CFQ公平调度算法  按照执行顺序，进行IO调度。可能会出现小数据量sql排队在大数据量sql后面，导致延迟很久  deadline调度算法 (MySQL推荐算法)  任何一个IO操作都不能一直不停的等待，在指定时间范围内，都必须让他执行 RAID存储架构RAID就是一个磁盘冗余阵列。服务器放了多块磁盘，使用RAID进行机器磁盘管理。RAID可以实现数据冗余机">
 <meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://cdn.nlark.com/yuque/0/2022/png/12966419/1650962115756-876262c5-2aef-458f-acc2-632d892d0964.png#clientId=u1e7a8eb8-c29c-4&crop=0&crop=0&crop=1&crop=1&from=paste&height=109&id=uec71f8fc&margin=%5Bobject%20Object%5D&name=image.png&originHeight=109&originWidth=580&originalType=binary&ratio=1&rotation=0&showTitle=false&size=8847&status=done&style=none&taskId=u453bdde0-af03-4454-b164-a25d7394ad0&title=&width=580">
 <meta property="article:published_time" content="2022-05-02T11:10:00.000Z">
-<meta property="article:modified_time" content="2022-07-05T15:08:04.968Z">
+<meta property="article:modified_time" content="2022-07-06T09:06:27.473Z">
 <meta property="article:author" content="kris cen">
 <meta property="article:tag" content="MySQL">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://cdn.nlark.com/yuque/0/2022/png/12966419/1650962115756-876262c5-2aef-458f-acc2-632d892d0964.png#clientId=u1e7a8eb8-c29c-4&crop=0&crop=0&crop=1&crop=1&from=paste&height=109&id=uec71f8fc&margin=%5Bobject%20Object%5D&name=image.png&originHeight=109&originWidth=580&originalType=binary&ratio=1&rotation=0&showTitle=false&size=8847&status=done&style=none&taskId=u453bdde0-af03-4454-b164-a25d7394ad0&title=&width=580">
   
   
   <title>生产经验与案例 - kris&#39; cabin</title>
@@ -195,7 +199,7 @@
   
     <span class="post-meta mr-2">
       <i class="iconfont icon-chart"></i>
-      0 字
+      1.5k 字
     </span>
   
 
@@ -204,7 +208,7 @@
       <i class="iconfont icon-clock-fill"></i>
       
       
-      1 分钟
+      13 分钟
     </span>
   
 
@@ -236,7 +240,57 @@
             <h1 style="display: none">生产经验与案例</h1>
             
             <div class="markdown-body">
-              
+              <h1 id="生产经验"><a href="#生产经验" class="headerlink" title="生产经验"></a>生产经验</h1><h2 id="IO调度优化"><a href="#IO调度优化" class="headerlink" title="IO调度优化"></a>IO调度优化</h2><p>IO调度算法：</p>
+<ul>
+<li>CFQ公平调度算法</li>
+</ul>
+<p>按照执行顺序，进行IO调度。<br>可能会出现小数据量sql排队在大数据量sql后面，导致延迟很久</p>
+<ul>
+<li>deadline调度算法 (MySQL推荐算法)</li>
+</ul>
+<p>任何一个IO操作都不能一直不停的等待，在指定时间范围内，都必须让他执行</p>
+<h2 id="RAID存储架构"><a href="#RAID存储架构" class="headerlink" title="RAID存储架构"></a>RAID存储架构</h2><p>RAID就是一个磁盘冗余阵列。服务器放了多块磁盘，使用RAID进行机器磁盘管理。<br>RAID可以实现数据冗余机制</p>
+<p>数据冗余机制<br>将你写入的一份数据，在两块磁盘上都写入。让两块磁盘上的数据一样，作为冗余备份。然后当一块磁盘坏掉的时候，从另一块磁盘读取冗余数据。</p>
+<p>电池充放电<br>防止停电的时候，缓存未刷入磁盘，在RAID卡上会配置独立的锂电池或者电容。考虑锂电池的性能衰减问题，需要让锂电池配置定时充放电，每隔30-90太难自动对锂电池充放电一次，可以延长锂电池的寿命和校准电池容量。<br>当锂电池自动充放电的时候，会导致数据库服务器的RAID存储定期的性能出现几十倍的抖动，间接导致数据库每隔一段时间出现性能抖动。</p>
+<p>RAID锂电池充放电池引起的性能抖动解决方案：</p>
+<ol>
+<li>将RAID卡的锂电池换成电容。电容不需要频繁充电，不会导致充放电的性能抖动。并且电容可以支持透明充放电。即自动检查电量，自动进行充电，不会说在充放电的时候让写IO直接走磁盘。缺点：更换电容麻烦，且电容比较容易老化。不太推荐</li>
+<li>手动充放电。关闭RAID自动充放电，然后通过脚本每隔一段时间在低峰期触发充放电。</li>
+<li>充放电的时候不关闭write back。设置锂电池充放电的时候不将缓存级别从write back修改为write through。配合方案二一起使用。</li>
+</ol>
+<h1 id="案例分析"><a href="#案例分析" class="headerlink" title="案例分析"></a>案例分析</h1><h2 id="数据库无法连接，Too-many-connections"><a href="#数据库无法连接，Too-many-connections" class="headerlink" title="数据库无法连接，Too many connections"></a>数据库无法连接，Too many connections</h2><h3 id="问题排查"><a href="#问题排查" class="headerlink" title="问题排查"></a>问题排查</h3><p>数据库连接数配置</p>
+<blockquote>
+<h1 id="my-cnf文件"><a href="#my-cnf文件" class="headerlink" title="my.cnf文件"></a>my.cnf文件</h1><p>max_connections</p>
+</blockquote>
+<p>查看目前连接数配置</p>
+<blockquote>
+<p>show variables like ‘max_connections’</p>
+</blockquote>
+<p>启动日志<br><img src="https://cdn.nlark.com/yuque/0/2022/png/12966419/1650962115756-876262c5-2aef-458f-acc2-632d892d0964.png#clientId=u1e7a8eb8-c29c-4&crop=0&crop=0&crop=1&crop=1&from=paste&height=109&id=uec71f8fc&margin=%5Bobject%20Object%5D&name=image.png&originHeight=109&originWidth=580&originalType=binary&ratio=1&rotation=0&showTitle=false&size=8847&status=done&style=none&taskId=u453bdde0-af03-4454-b164-a25d7394ad0&title=&width=580" srcset="/img/loading.gif" lazyload alt="image.png"></p>
+<p>linux默认对单个进程设置文件句柄数为1024，因为MySQL服务实例还包括输入输出和服务监控，以及其他进程间通讯，除去这些开销，留给连接池数量的并不多，特别是高并发情况下。<br>文件句柄如果太少的话，会导致没有办法创建大量的网络连接。</p>
+<h3 id="处理方案"><a href="#处理方案" class="headerlink" title="处理方案"></a>处理方案</h3><blockquote>
+<p>查看openfile数量<br>ulimit -a<br>修改设置<br>ulimit -HSn 65535</p>
+<p>cat &#x2F;etc&#x2F;security&#x2F;limits.conf<br>cat &#x2F;etc&#x2F;rc.local</p>
+</blockquote>
+<h2 id="刷盘导致性能抖动"><a href="#刷盘导致性能抖动" class="headerlink" title="刷盘导致性能抖动"></a>刷盘导致性能抖动</h2><h3 id="原因分析"><a href="#原因分析" class="headerlink" title="原因分析"></a>原因分析</h3><ol>
+<li>buffer pool的缓存页满了，此时执行一个sql查询很多数据，一下子会把很多缓存页flush到磁盘上，刷盘很慢，会导致查询语句执行的很慢</li>
+<li>可能执行更新语句的时候，redo log在磁盘上所有文件都写满了，此时需要回到第一个redo log文件覆盖写。覆盖写的时候，会涉及到第一个redo log文件里很多redo log日志对应的更新操作改动了缓存页，那些缓存页还没有flush到磁盘，此时必须把缓存页flush到磁盘，才能执行后续的更新语句。</li>
+</ol>
+<h3 id="处理方案-1"><a href="#处理方案-1" class="headerlink" title="处理方案"></a>处理方案</h3><p>仅仅只能尽可能减少这种性能抖动，无法完全避免<br>核心思路</p>
+<ul>
+<li>尽量减少缓存页flush到磁盘的频率</li>
+<li>尽量提升缓存页flush到磁盘的速度</li>
+</ul>
+<p>主要进行第二点优化，关键是尽量减少flush缓存页到磁盘的时间开销到最小。</p>
+<ol>
+<li><code>innodb_io_capacity</code></li>
+</ol>
+<p>数据库采用多大的IO速率把缓存页flush到磁盘去。<br>fio工具<br>用于测试磁盘最大随机IO速率的linux工具。</p>
+<ol start="2">
+<li><code>innodb_flush_neighbors</code></li>
+</ol>
+<p>在flush缓存页到磁盘的时候，会控制把缓存页临近的其他缓存页也刷到磁盘，这样有时候会导致flush的缓存页过多。如果使用SSD固态，可以将这个参数设置为0，禁止刷临近缓存页。</p>
+
             </div>
             <hr>
             <div>

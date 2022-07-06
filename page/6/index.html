@@ -191,6 +191,53 @@
     <article class="col-12 col-md-12 mx-auto index-info">
       <h1 class="index-header">
         
+        <a href="/2022/05/02/MySQL/%E7%94%9F%E4%BA%A7%E7%BB%8F%E9%AA%8C%E4%B8%8E%E6%A1%88%E4%BE%8B/" target="_self">
+          生产经验与案例
+        </a>
+      </h1>
+
+      <p class="index-excerpt">
+        <a href="/2022/05/02/MySQL/%E7%94%9F%E4%BA%A7%E7%BB%8F%E9%AA%8C%E4%B8%8E%E6%A1%88%E4%BE%8B/" target="_self">
+          
+          生产经验IO调度优化IO调度算法：  CFQ公平调度算法  按照执行顺序，进行IO调度。可能会出现小数据量sql排队在大数据量sql后面，导致延迟很久  deadline调度算法 (MySQL推荐算法)  任何一个IO操作都不能一直不停的等待，在指定时间范围内，都必须让他执行 RAID存储架构RAID就是一个磁盘冗余阵列。服务器放了多块磁盘，使用RAID进行机器磁盘管理。RAID可以实现数据冗余机
+        </a>
+      </p>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2022-05-02 19:10" pubdate>
+              2022-05-02
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-category"></i>
+            
+              <a href="/categories/%E6%95%B0%E6%8D%AE%E5%BA%93/">数据库</a>
+            
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/MySQL/">MySQL</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+    <article class="col-12 col-md-12 mx-auto index-info">
+      <h1 class="index-header">
+        
         <a href="/2022/05/02/MySQL/%E6%89%A7%E8%A1%8C%E8%AE%A1%E5%88%92/" target="_self">
           执行计划
         </a>
@@ -199,7 +246,7 @@
       <p class="index-excerpt">
         <a href="/2022/05/02/MySQL/%E6%89%A7%E8%A1%8C%E8%AE%A1%E5%88%92/" target="_self">
           
-          
+          概述单表查询constselect * from table where id&#x3D;xselect * from table where name&#x3D;x通过聚簇索引或者二级索引+聚簇索引回源，这种根据索引直接快速查找数据的过程叫做const，标识性能超高的常量级。此时二级索引必须是唯一索引unique key refselect * from table where name&#x3D;x二级索引是个普通的key
         </a>
       </p>
 
@@ -246,7 +293,7 @@
       <p class="index-excerpt">
         <a href="/2022/05/02/MySQL/%E7%B4%A2%E5%BC%95/" target="_self">
           
-          
+          物理存储结构数据页结构数据页之间组成双向链表，然后数据页内部的数据行组成单向链表，并且数据行根据主键从小到大排序。每个数据页存在一个页目录，里面根据数据行的主键存放了一个目录，同时数据行是被分散到存储到不同槽位中。所以实际上每个数据页的目录中，就是这个页里每个主键跟所在槽位的映射。 全表扫描 如果查询的是主键，会在页目录中进行二分查找 然后到对应数据页继续进行二分查找 如果查询的不是主键，会读取表
         </a>
       </p>
 
@@ -293,7 +340,7 @@
       <p class="index-excerpt">
         <a href="/2022/05/02/MySQL/%E9%94%81%E6%9C%BA%E5%88%B6/" target="_self">
           
-          
+          行锁概述锁机制流程 当事务A需要更新一行数据，发现没有锁，就会创建一个锁，包含trx_id和等待状态false。 事务B需要对同一行数据更新的时候，发现已经存在锁了，也会创建一个锁，包含trx_id和等待状态true，排在A后面。 事务A执行完后，会将自己的锁释放，然后检查后面是否还有其他锁。 事务B就会锁等待状态改为true，然后唤醒事务B继续执行。  锁类型 共享锁 独占锁   锁类型 独占锁
         </a>
       </p>
 
@@ -340,7 +387,7 @@
       <p class="index-excerpt">
         <a href="/2022/05/02/MySQL/%E4%BA%8B%E5%8A%A1%E6%9C%BA%E5%88%B6/" target="_self">
           
-          
+          事务多事务并发问题脏写两个事务在没有提交的情况下，修改同一个事务，结果其中一个事务回滚，将另一个事务修改的值也回滚了。 事务A和事务B同事更新一条数据，事务A先更新为值A，事务B然后更新为值B。事务A在更新后写入一条undo log，值为NULL。事务B写入一条undo log，值为A。事务B先提交事务，更新值为B。然后事务A进行回滚，读取undo log，将值回滚为NULL。针对事务B而言就是脏
         </a>
       </p>
 
@@ -387,7 +434,7 @@
       <p class="index-excerpt">
         <a href="/2022/05/02/MySQL/log%E6%97%A5%E5%BF%97/" target="_self">
           
-          
+          redo log概述为什么需要redo log不直接刷盘如果把修改过的缓存页都刷入磁盘，首先磁盘页16KB，数据比较大，刷入磁盘比较耗时。并且可能只修改了缓存页的几个字段，直接刷盘很费资源其次缓存页刷入磁盘是随机读写，性能很差。redo log相对小，就记录表空间号+数据页号+偏移量+修改几个字节的值+具体的值，并且是顺序写入磁盘，速度很快。 日志类型 MLOG_1BYTE MLOG_2BYTE
         </a>
       </p>
 
@@ -434,7 +481,7 @@
       <p class="index-excerpt">
         <a href="/2022/05/02/MySQL/%E7%89%A9%E7%90%86%E5%AD%98%E5%82%A8/" target="_self">
           
-          
+          概念行数据的物理存储行格式设置 COMPACT12CREATE TABLE table_name(cloums) ROW_FORMAT&#x3D;COMPACTALTER TABLE table_name ROW_FORMAT&#x3D;COMPACT 建表的时候，可以指定行存储格式，可以后序修改行存储格式行数据格式  变长存储格式在进行数据存储的时候，遇到变长字段，会带上一些额外的附加信息，比如变长字段的长度列表。
         </a>
       </p>
 
@@ -481,7 +528,7 @@
       <p class="index-excerpt">
         <a href="/2022/05/02/MySQL/BufferPool/" target="_self">
           
-          
+          Buffer Pool缓存了磁盘上的真实数据。数据的增删改操作其实是对Buffer Pool里的数据进行的，同时配合了后序的redo log、刷盘等机制  配置Buffer Pool默认配置128MB。16核32G的机器，可以给Buffer Pool配置2GB内存  [server]innodb_buffer_pool_size &#x3D; 2147483648  存储结构 缓冲页MySQL对
         </a>
       </p>
 
@@ -528,7 +575,7 @@
       <p class="index-excerpt">
         <a href="/2022/05/02/MySQL/MySQL%E9%83%A8%E7%BD%B2%E4%B8%8E%E6%89%A9%E5%B1%95/" target="_self">
           
-          
+          MySQL机器选型 Java应用系统部署机器  2核4G或者4核8G4核8G的机器根据请求处理速度，从每秒1.200到每秒7.800都可能。正常情况在4.500左右  数据库部署机器  最低配置8核16G,一般16核32G16核32G的机器每秒2.3000并发没问题 MySQL压测相关概念QPS：Query Per Second 每秒处理请求数TPS：Transaction Per Second
         </a>
       </p>
 
@@ -575,7 +622,7 @@
       <p class="index-excerpt">
         <a href="/2022/05/02/MySQL/MySQL%E6%A6%82%E8%BF%B0/" target="_self">
           
-          
+          MySQL概览 流程 数据库连接池的工作线程监听网络连接中的请求，读取和解析一条我们发送给MySQL的SQL语句 工作线程接收到SQL语句后，转交给SQL接口执行 SQL接口会找到查询解析器，进行SQL解析 然后会找查询优化器选择最优的查询路径 执行器根据优化器生成的一套执行计划，然后不停的调用存储引擎的各种接口去完成SQL语句的执行计划组件   数据库连接池  数据库连接池用于维护与系统之间的多
         </a>
       </p>
 
@@ -601,53 +648,6 @@
             <i class="iconfont icon-tags"></i>
             
               <a href="/tags/MySQL/">MySQL</a>
-            
-          </div>
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-    <article class="col-12 col-md-12 mx-auto index-info">
-      <h1 class="index-header">
-        
-        <a href="/2022/05/01/JVM/OOM%E4%BC%98%E5%8C%96/" target="_self">
-          OOM优化
-        </a>
-      </h1>
-
-      <p class="index-excerpt">
-        <a href="/2022/05/01/JVM/OOM%E4%BC%98%E5%8C%96/" target="_self">
-          
-          
-        </a>
-      </p>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2022-05-01 19:06" pubdate>
-              2022-05-01
-            </time>
-          </div>
-        
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-category"></i>
-            
-              <a href="/categories/Java/">Java</a>
-            
-          </div>
-        
-        
-          <div class="post-meta">
-            <i class="iconfont icon-tags"></i>
-            
-              <a href="/tags/JVM/">JVM</a>
             
           </div>
         

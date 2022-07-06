@@ -16,21 +16,27 @@
   <meta name="author" content="kris cen">
   <meta name="keywords" content="">
   
-    <meta name="description" content="概述可能发生OOM的区域Metaspace发生OOM设置Metaspace大小的参数  -XX:MetaspaceSize&#x3D;512m -XX:MaxMetaspaceSize&#x3D;512m  发生Metaspace OOM的可能问题  Metaspace参数为默认值，导致大型系统运行会OOM 通过cglib等技术动态生成一些类，使用过的话，很容易将Metaspace塞满，引发内存溢">
+    <meta name="description" content="整体功能服务器数据库部署情况服务器4核8G的机器一般每秒抗几百请求没问题，200~300的请求CPU资源使用率不超过50%数据库16核32GSSD的数据库，在极限的时候每秒上万，一般在每秒4.5K的时候没有什么问题。 思考  系统业务流程 系统用户量，用户使用习惯导致系统的请求负载量 核心业务流程性能 核心流程每个步骤耗时 核心流程的性能，是否有优化空间 高峰期，服务器和数据库负载高，造成影响">
 <meta property="og:type" content="article">
-<meta property="og:title" content="OOM优化">
-<meta property="og:url" content="http://example.com/2022/05/01/JVM/OOM%E4%BC%98%E5%8C%96/index.html">
+<meta property="og:title" content="RocketMQ源码">
+<meta property="og:url" content="http://example.com/2022/05/05/RocketMQ/RocketMQ%E8%83%8C%E6%99%AF%E6%A6%82%E8%BF%B0/index.html">
 <meta property="og:site_name" content="kris&#39; cabin">
-<meta property="og:description" content="概述可能发生OOM的区域Metaspace发生OOM设置Metaspace大小的参数  -XX:MetaspaceSize&#x3D;512m -XX:MaxMetaspaceSize&#x3D;512m  发生Metaspace OOM的可能问题  Metaspace参数为默认值，导致大型系统运行会OOM 通过cglib等技术动态生成一些类，使用过的话，很容易将Metaspace塞满，引发内存溢">
+<meta property="og:description" content="整体功能服务器数据库部署情况服务器4核8G的机器一般每秒抗几百请求没问题，200~300的请求CPU资源使用率不超过50%数据库16核32GSSD的数据库，在极限的时候每秒上万，一般在每秒4.5K的时候没有什么问题。 思考  系统业务流程 系统用户量，用户使用习惯导致系统的请求负载量 核心业务流程性能 核心流程每个步骤耗时 核心流程的性能，是否有优化空间 高峰期，服务器和数据库负载高，造成影响">
 <meta property="og:locale" content="zh_CN">
-<meta property="article:published_time" content="2022-05-01T11:06:00.000Z">
-<meta property="article:modified_time" content="2022-07-06T08:46:20.027Z">
+<meta property="og:image" content="https://cdn.nlark.com/yuque/0/2022/png/12966419/1649666502314-5c6c0930-2919-412b-a30c-d665a64659ae.png#clientId=ue46e4ca0-0990-4&crop=0&crop=0&crop=1&crop=1&from=paste&height=447&id=ucef7d3f7&margin=%5Bobject%20Object%5D&name=image.png&originHeight=447&originWidth=604&originalType=binary&ratio=1&rotation=0&showTitle=false&size=59758&status=done&style=none&taskId=u6421d62f-460a-4f77-b962-b6e2ab9034b&title=&width=604">
+<meta property="og:image" content="https://cdn.nlark.com/yuque/0/2022/png/12966419/1649668320194-5947adcd-af6b-4756-9e7b-42bbd145bc82.png#clientId=ue46e4ca0-0990-4&crop=0&crop=0&crop=1&crop=1&from=paste&height=330&id=u2e7119f2&margin=%5Bobject%20Object%5D&name=image.png&originHeight=330&originWidth=583&originalType=binary&ratio=1&rotation=0&showTitle=false&size=72678&status=done&style=none&taskId=u6da2cf4b-e8d2-4b80-87ce-e6c917b8514&title=&width=583">
+<meta property="og:image" content="https://cdn.nlark.com/yuque/0/2022/png/12966419/1649669207521-6e2567af-a654-484f-8178-8bfe6809f784.png#clientId=ue46e4ca0-0990-4&crop=0&crop=0&crop=1&crop=1&from=paste&height=529&id=u286621ff&margin=%5Bobject%20Object%5D&name=image.png&originHeight=529&originWidth=569&originalType=binary&ratio=1&rotation=0&showTitle=false&size=61198&status=done&style=none&taskId=ufd3465f2-1b21-4f3a-8f4d-f3c5c41cdc3&title=&width=569">
+<meta property="og:image" content="https://cdn.nlark.com/yuque/0/2022/png/12966419/1649669607261-1b5bd48a-2889-4126-a92d-052af3ec1b5a.png#clientId=ue46e4ca0-0990-4&crop=0&crop=0&crop=1&crop=1&from=paste&height=539&id=u3f1788fc&margin=%5Bobject%20Object%5D&name=image.png&originHeight=539&originWidth=575&originalType=binary&ratio=1&rotation=0&showTitle=false&size=60395&status=done&style=none&taskId=u32f64152-64e3-4ca5-9c94-5c92c04d78b&title=&width=575">
+<meta property="og:image" content="https://cdn.nlark.com/yuque/0/2022/png/12966419/1649731926008-7c77b31a-5ace-4b3e-8621-e62904d91462.png#clientId=u30317928-2cbc-4&crop=0&crop=0&crop=1&crop=1&from=paste&height=321&id=uaaf6036c&margin=%5Bobject%20Object%5D&name=image.png&originHeight=321&originWidth=592&originalType=binary&ratio=1&rotation=0&showTitle=false&size=59853&status=done&style=none&taskId=ufcd32261-6760-495b-8d5b-f80858b2a87&title=&width=592">
+<meta property="article:published_time" content="2022-05-05T11:01:00.000Z">
+<meta property="article:modified_time" content="2022-07-06T09:17:42.996Z">
 <meta property="article:author" content="kris cen">
-<meta property="article:tag" content="JVM">
+<meta property="article:tag" content="RocketMQ">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://cdn.nlark.com/yuque/0/2022/png/12966419/1649666502314-5c6c0930-2919-412b-a30c-d665a64659ae.png#clientId=ue46e4ca0-0990-4&crop=0&crop=0&crop=1&crop=1&from=paste&height=447&id=ucef7d3f7&margin=%5Bobject%20Object%5D&name=image.png&originHeight=447&originWidth=604&originalType=binary&ratio=1&rotation=0&showTitle=false&size=59758&status=done&style=none&taskId=u6421d62f-460a-4f77-b962-b6e2ab9034b&title=&width=604">
   
   
-  <title>OOM优化 - kris&#39; cabin</title>
+  <title>RocketMQ源码 - kris&#39; cabin</title>
 
   <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/css/bootstrap.min.css" />
 
@@ -176,7 +182,7 @@
       <div class="full-bg-img">
         <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
           <div class="page-header text-center fade-in-up">
-            <span class="h2" id="subtitle" title="OOM优化">
+            <span class="h2" id="subtitle" title="RocketMQ源码">
               
             </span>
 
@@ -186,8 +192,8 @@
   
     <span class="post-meta">
       <i class="iconfont icon-date-fill" aria-hidden="true"></i>
-      <time datetime="2022-05-01 19:06" pubdate>
-        2022年5月1日 晚上
+      <time datetime="2022-05-05 19:01" pubdate>
+        2022年5月5日 晚上
       </time>
     </span>
   
@@ -197,7 +203,7 @@
   
     <span class="post-meta mr-2">
       <i class="iconfont icon-chart"></i>
-      635 字
+      674 字
     </span>
   
 
@@ -235,36 +241,64 @@
         <div class="py-5" id="board">
           <article class="post-content mx-auto">
             <!-- SEO header -->
-            <h1 style="display: none">OOM优化</h1>
+            <h1 style="display: none">RocketMQ源码</h1>
             
             <div class="markdown-body">
-              <h1 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h1><h2 id="可能发生OOM的区域"><a href="#可能发生OOM的区域" class="headerlink" title="可能发生OOM的区域"></a>可能发生OOM的区域</h2><h3 id="Metaspace发生OOM"><a href="#Metaspace发生OOM" class="headerlink" title="Metaspace发生OOM"></a>Metaspace发生OOM</h3><p>设置Metaspace大小的参数</p>
-<ul>
-<li>-XX:MetaspaceSize&#x3D;512m</li>
-<li>-XX:MaxMetaspaceSize&#x3D;512m</li>
-</ul>
-<p>发生Metaspace OOM的可能问题</p>
-<ul>
-<li>Metaspace参数为默认值，导致大型系统运行会OOM</li>
-<li>通过cglib等技术动态生成一些类，使用过的话，很容易将Metaspace塞满，引发内存溢出。</li>
-</ul>
-<h3 id="线程的栈内存发生OOM"><a href="#线程的栈内存发生OOM" class="headerlink" title="线程的栈内存发生OOM"></a>线程的栈内存发生OOM</h3><p>每次方法调用的栈帧都是要占用内存的。<br>每个线程的虚拟机栈大小固定，一般设置1MB，每次线程调用一个方法，就会将本次方法调用的栈帧压入虚拟机内，栈帧内有发放的局部变量。</p>
-<p>发生栈内存溢出的可能问题</p>
-<ul>
-<li>错误的递归调用导致</li>
-</ul>
-<h3 id="堆内存发生OOM"><a href="#堆内存发生OOM" class="headerlink" title="堆内存发生OOM"></a>堆内存发生OOM</h3><p>堆内存内存溢出的可能</p>
-<ul>
-<li>系统承载高并发请求，因为请求量过大，导致大量对象都是存活的，所以要继续放入新的对象放不下，引发OOM</li>
-<li>系统有内存泄漏问题，莫名其妙弄了很多对象并且对象都是存活的，没有及时取消对他们的应用。导致触发GC还是无法回收，只能引发内存溢出<h3 id="堆外内存发生OOM"><a href="#堆外内存发生OOM" class="headerlink" title="堆外内存发生OOM"></a>堆外内存发生OOM</h3><code>Direct buffer memory</code></li>
-</ul>
-<h2 id="空间分配"><a href="#空间分配" class="headerlink" title="空间分配"></a>空间分配</h2><p>4核8G的机器<br>Metaspace一般设置512MB大小<br>堆内存一般占机器内存的一半差不多，大概4GB<br>剩余的栈内存根据线程来，每个线程设置1MB。一般一个Tomcat内部总线程在1000个内大部分时间几百个，预计总大小1GB</p>
-<h2 id="问题解决思路"><a href="#问题解决思路" class="headerlink" title="问题解决思路"></a>问题解决思路</h2><ol>
-<li>确定内存溢出类型</li>
+              <h1 id="整体功能"><a href="#整体功能" class="headerlink" title="整体功能"></a>整体功能</h1><p><img src="https://cdn.nlark.com/yuque/0/2022/png/12966419/1649666502314-5c6c0930-2919-412b-a30c-d665a64659ae.png#clientId=ue46e4ca0-0990-4&crop=0&crop=0&crop=1&crop=1&from=paste&height=447&id=ucef7d3f7&margin=%5Bobject%20Object%5D&name=image.png&originHeight=447&originWidth=604&originalType=binary&ratio=1&rotation=0&showTitle=false&size=59758&status=done&style=none&taskId=u6421d62f-460a-4f77-b962-b6e2ab9034b&title=&width=604" srcset="/img/loading.gif" lazyload alt="image.png"><br>服务器数据库部署情况<br><img src="https://cdn.nlark.com/yuque/0/2022/png/12966419/1649668320194-5947adcd-af6b-4756-9e7b-42bbd145bc82.png#clientId=ue46e4ca0-0990-4&crop=0&crop=0&crop=1&crop=1&from=paste&height=330&id=u2e7119f2&margin=%5Bobject%20Object%5D&name=image.png&originHeight=330&originWidth=583&originalType=binary&ratio=1&rotation=0&showTitle=false&size=72678&status=done&style=none&taskId=u6da2cf4b-e8d2-4b80-87ce-e6c917b8514&title=&width=583" srcset="/img/loading.gif" lazyload alt="image.png"><br>服务器<br>4核8G的机器一般每秒抗几百请求没问题，200~300的请求CPU资源使用率不超过50%<br>数据库<br>16核32GSSD的数据库，在极限的时候每秒上万，一般在每秒4.5K的时候没有什么问题。</p>
+<p>思考</p>
+<ol>
+<li>系统业务流程</li>
+<li>系统用户量，用户使用习惯导致系统的请求负载量<ol>
+<li>核心业务流程性能</li>
+<li>核心流程每个步骤耗时</li>
+<li>核心流程的性能，是否有优化空间</li>
+<li>高峰期，服务器和数据库负载高，造成影响</li>
 </ol>
-<p>确定是堆内存溢出、栈内存溢出还是Metaspace内存溢出</p>
+</li>
+</ol>
+<p>订单支付流程<br><img src="https://cdn.nlark.com/yuque/0/2022/png/12966419/1649669207521-6e2567af-a654-484f-8178-8bfe6809f784.png#clientId=ue46e4ca0-0990-4&crop=0&crop=0&crop=1&crop=1&from=paste&height=529&id=u286621ff&margin=%5Bobject%20Object%5D&name=image.png&originHeight=529&originWidth=569&originalType=binary&ratio=1&rotation=0&showTitle=false&size=61198&status=done&style=none&taskId=ufd3465f2-1b21-4f3a-8f4d-f3c5c41cdc3&title=&width=569" srcset="/img/loading.gif" lazyload alt="image.png"><br>订单退款流程<br><img src="https://cdn.nlark.com/yuque/0/2022/png/12966419/1649669607261-1b5bd48a-2889-4126-a92d-052af3ec1b5a.png#clientId=ue46e4ca0-0990-4&crop=0&crop=0&crop=1&crop=1&from=paste&height=539&id=u3f1788fc&margin=%5Bobject%20Object%5D&name=image.png&originHeight=539&originWidth=575&originalType=binary&ratio=1&rotation=0&showTitle=false&size=60395&status=done&style=none&taskId=u32f64152-64e3-4ca5-9c94-5c92c04d78b&title=&width=575" srcset="/img/loading.gif" lazyload alt="image.png"></p>
+<h1 id="MQ部署压测"><a href="#MQ部署压测" class="headerlink" title="MQ部署压测"></a>MQ部署压测</h1><p><img src="https://cdn.nlark.com/yuque/0/2022/png/12966419/1649731926008-7c77b31a-5ace-4b3e-8621-e62904d91462.png#clientId=u30317928-2cbc-4&crop=0&crop=0&crop=1&crop=1&from=paste&height=321&id=uaaf6036c&margin=%5Bobject%20Object%5D&name=image.png&originHeight=321&originWidth=592&originalType=binary&ratio=1&rotation=0&showTitle=false&size=59853&status=done&style=none&taskId=ufcd32261-6760-495b-8d5b-f80858b2a87&title=&width=592" srcset="/img/loading.gif" lazyload alt="image.png"></p>
+<h2 id="压测"><a href="#压测" class="headerlink" title="压测"></a>压测</h2><h3 id="OS内核参数调整"><a href="#OS内核参数调整" class="headerlink" title="OS内核参数调整"></a>OS内核参数调整</h3><ol>
+<li>vm.overcommit_memory</li>
+</ol>
+<ul>
+<li>0</li>
+</ul>
+<p>在中间件申请内存的时候，os内核会检查可用内存是否足够，如果足够就会分配内存，如果剩余内存不太够，就会拒绝申请，导致申请内存失败</p>
+<ul>
+<li>1</li>
+</ul>
+<p>把所有可以用的物理内存都允许分配给你，只要有内存，就给你用</p>
+<ul>
+<li>2</li>
+</ul>
 <ol start="2">
-<li>确定是哪个线程内存溢出了</li>
+<li>vm.max_map_count</li>
+</ol>
+<p>参数会影响中间件系统可以开启的线程的数量</p>
+<ol start="3">
+<li>vm.swappiness</li>
+</ol>
+<p>控制进程的swap行为。os会把一部分磁盘空间作为swap区域，然后有的进程现在不活跃，就会被系统调整为睡眠状态，把进程中的数据放入磁盘的swap区域，然后让这个进程把原来占用的内存空间腾出来，交给其他活跃运行的进程使用。</p>
+<ul>
+<li>0</li>
+</ul>
+<p>尽量别把任何一个进程放入磁盘swap区域，尽量大家都用物理内存</p>
+<ul>
+<li>100</li>
+</ul>
+<p>尽量把一些进程放到磁盘swap区域，内存腾出去给活跃的进程</p>
+<ol start="4">
+<li>ulimit</li>
+</ol>
+<p>用来控制linux上的追到文件连接数，默认1024。大量频繁的读写磁盘文件的时候，或者进行网络通信的时候和这个参数有关。</p>
+<h2 id="压测指标"><a href="#压测指标" class="headerlink" title="压测指标"></a>压测指标</h2><ol>
+<li>RocketMQ的TPS和消息延时</li>
+<li>cpu负载情况</li>
+<li>内存使用率</li>
+<li>JVM GC频率</li>
+<li>磁盘IO负载</li>
+<li>网卡流量</li>
 </ol>
 
             </div>
@@ -275,7 +309,7 @@
                   <div class="post-meta mr-3">
                     <i class="iconfont icon-category"></i>
                     
-                      <a class="hover-with-bg" href="/categories/Java/">Java</a>
+                      <a class="hover-with-bg" href="/categories/MQ/">MQ</a>
                     
                   </div>
                 
@@ -283,7 +317,7 @@
                   <div class="post-meta">
                     <i class="iconfont icon-tags"></i>
                     
-                      <a class="hover-with-bg" href="/tags/JVM/">JVM</a>
+                      <a class="hover-with-bg" href="/tags/RocketMQ/">RocketMQ</a>
                     
                   </div>
                 
@@ -300,9 +334,9 @@
                   <article class="post-prev col-6">
                     
                     
-                      <a href="/2022/05/02/MySQL/MySQL%E6%A6%82%E8%BF%B0/">
+                      <a href="/2022/05/05/RocketMQ/RocketMQ%E6%A6%82%E8%BF%B0/">
                         <i class="iconfont icon-arrowleft"></i>
-                        <span class="hidden-mobile">MySQL概述</span>
+                        <span class="hidden-mobile">RocketMQ概述</span>
                         <span class="visible-mobile">上一篇</span>
                       </a>
                     
@@ -310,8 +344,8 @@
                   <article class="post-next col-6">
                     
                     
-                      <a href="/2022/05/01/JVM/JVM%E4%BC%98%E5%8C%96/">
-                        <span class="hidden-mobile">JVM优化</span>
+                      <a href="/2022/05/04/Redis/Redis%E6%96%B9%E6%A1%88/">
+                        <span class="hidden-mobile">Redis方案</span>
                         <span class="visible-mobile">下一篇</span>
                         <i class="iconfont icon-arrowright"></i>
                       </a>

@@ -16,13 +16,15 @@
   <meta name="author" content="kris cen">
   <meta name="keywords" content="">
   
-    <meta property="og:type" content="article">
+    <meta name="description" content="行锁概述锁机制流程 当事务A需要更新一行数据，发现没有锁，就会创建一个锁，包含trx_id和等待状态false。 事务B需要对同一行数据更新的时候，发现已经存在锁了，也会创建一个锁，包含trx_id和等待状态true，排在A后面。 事务A执行完后，会将自己的锁释放，然后检查后面是否还有其他锁。 事务B就会锁等待状态改为true，然后唤醒事务B继续执行。  锁类型 共享锁 独占锁   锁类型 独占锁">
+<meta property="og:type" content="article">
 <meta property="og:title" content="锁机制">
 <meta property="og:url" content="http://example.com/2022/05/02/MySQL/%E9%94%81%E6%9C%BA%E5%88%B6/index.html">
 <meta property="og:site_name" content="kris&#39; cabin">
+<meta property="og:description" content="行锁概述锁机制流程 当事务A需要更新一行数据，发现没有锁，就会创建一个锁，包含trx_id和等待状态false。 事务B需要对同一行数据更新的时候，发现已经存在锁了，也会创建一个锁，包含trx_id和等待状态true，排在A后面。 事务A执行完后，会将自己的锁释放，然后检查后面是否还有其他锁。 事务B就会锁等待状态改为true，然后唤醒事务B继续执行。  锁类型 共享锁 独占锁   锁类型 独占锁">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2022-05-02T11:07:00.000Z">
-<meta property="article:modified_time" content="2022-07-05T15:06:58.391Z">
+<meta property="article:modified_time" content="2022-07-06T08:51:12.015Z">
 <meta property="article:author" content="kris cen">
 <meta property="article:tag" content="MySQL">
 <meta name="twitter:card" content="summary_large_image">
@@ -195,7 +197,7 @@
   
     <span class="post-meta mr-2">
       <i class="iconfont icon-chart"></i>
-      0 字
+      888 字
     </span>
   
 
@@ -204,7 +206,7 @@
       <i class="iconfont icon-clock-fill"></i>
       
       
-      1 分钟
+      8 分钟
     </span>
   
 
@@ -236,7 +238,105 @@
             <h1 style="display: none">锁机制</h1>
             
             <div class="markdown-body">
-              
+              <h1 id="行锁"><a href="#行锁" class="headerlink" title="行锁"></a>行锁</h1><h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><h3 id="锁机制流程"><a href="#锁机制流程" class="headerlink" title="锁机制流程"></a>锁机制流程</h3><ol>
+<li>当事务A需要更新一行数据，发现没有锁，就会创建一个锁，包含trx_id和等待状态false。</li>
+<li>事务B需要对同一行数据更新的时候，发现已经存在锁了，也会创建一个锁，包含trx_id和等待状态true，排在A后面。</li>
+<li>事务A执行完后，会将自己的锁释放，然后检查后面是否还有其他锁。</li>
+<li>事务B就会锁等待状态改为true，然后唤醒事务B继续执行。</li>
+</ol>
+<h3 id="锁类型"><a href="#锁类型" class="headerlink" title="锁类型"></a>锁类型</h3><ul>
+<li>共享锁</li>
+<li>独占锁<table>
+<thead>
+<tr>
+<th>锁类型</th>
+<th>独占锁</th>
+<th>共享锁</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>独占锁</td>
+<td>互斥</td>
+<td>互斥</td>
+</tr>
+<tr>
+<td>共享锁</td>
+<td>互斥</td>
+<td>不互斥</td>
+</tr>
+</tbody></table>
+</li>
+</ul>
+<h3 id="独占锁"><a href="#独占锁" class="headerlink" title="独占锁"></a>独占锁</h3><p>独占锁Exclude，也叫X锁。<br>当一个事务加了独占锁之后，其他事务要再更新这行数据，都要加独占锁，但是只能生成独占锁在后面等待。</p>
+<p>此时对一行数据的读和写两个操作默认是不会加锁互斥。通过MVCC机制为了解决这个问题，避免频繁加锁互斥。 </p>
+<p>查询操作也可以加锁：<code>select * from table for update</code><br>查询加了独占锁，在事务提交之前，任何人都不能更新数据，只能在本事务中更新数据，等你提交了，别人才可以更新数据。</p>
+<h3 id="共享锁"><a href="#共享锁" class="headerlink" title="共享锁"></a>共享锁</h3><p>共享锁，也叫S锁。</p>
+<p>查询方式加锁：在查询语句后面加上<code>lock in share mode</code></p>
+<h3 id="元数据锁"><a href="#元数据锁" class="headerlink" title="元数据锁"></a>元数据锁</h3><p>Metadata Locks<br>执行DDL语句的时候会阻塞所有增删改操作，执行增删改操作的时候也会阻塞DDL操作。</p>
+<h1 id="表锁"><a href="#表锁" class="headerlink" title="表锁"></a>表锁</h1><h2 id="概述-1"><a href="#概述-1" class="headerlink" title="概述"></a>概述</h2><p>如果要读取别的事务在更新中的数据，有两个可能</p>
+<ul>
+<li>基于MVCC机制进行事务隔离，读取快照版本</li>
+<li>查询的同时基于特殊语法去加独占锁或者共享锁<ul>
+<li>查询的时候加独占锁，那么跟其他更新数据的事务加的独占锁互斥</li>
+<li>查询的时候加共享锁，那么跟其他查询加的共享锁不互斥，但是跟其他事务更新数据加的独占锁互斥，跟其他查询加的独占锁也互斥</li>
+</ul>
+</li>
+</ul>
+<p>表锁分为两种</p>
+<ul>
+<li>表锁</li>
+<li>表级的意向锁</li>
+</ul>
+<p>手动加表锁语法</p>
+<ul>
+<li>加表级共享锁<code>LOCK TABLES xxx READ</code></li>
+<li>加表级独占锁<code>LOCK TABLES xxx WRITE</code></li>
+</ul>
+<p>意向锁加锁场景</p>
+<ul>
+<li>如果有事务在表里执行增删改操作，那在行级会加独占锁，同时会在表级加一个意向独占锁</li>
+<li>如果有事务在表里执行查询操作，那么会在表级加一个意向共享锁</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>锁类型</th>
+<th>独占锁</th>
+<th>意向独占锁</th>
+<th>共享锁</th>
+<th>意向共享锁</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>独占锁</td>
+<td>互斥</td>
+<td>互斥</td>
+<td>互斥</td>
+<td>互斥</td>
+</tr>
+<tr>
+<td>意向独占锁</td>
+<td>互斥</td>
+<td>不互斥</td>
+<td>互斥</td>
+<td>不互斥</td>
+</tr>
+<tr>
+<td>共享锁</td>
+<td>互斥</td>
+<td>互斥</td>
+<td>不互斥</td>
+<td>不互斥</td>
+</tr>
+<tr>
+<td>意向共享锁</td>
+<td>互斥</td>
+<td>不互斥</td>
+<td>不互斥</td>
+<td>不互斥</td>
+</tr>
+</tbody></table>
+
             </div>
             <hr>
             <div>

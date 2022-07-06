@@ -16,16 +16,20 @@
   <meta name="author" content="kris cen">
   <meta name="keywords" content="">
   
-    <meta property="og:type" content="article">
+    <meta name="description" content="Atomic执行流程 多个线程同时执行i++,i初始为0   线程A去判断此时i是否等于0，发现是，就说明没有人改动过，就执行i++，将i改为1 线程B同时去判断此时i是否等于0，发现i变为1，说明有人改动过，就重新查询，并再次去比较。  Atomic底层原理Atomic原子类核心思想：CAS(compare and set)无锁化每次尝试修改的时候，就比对一下有没有人修改过这个值，如果没有人修改">
+<meta property="og:type" content="article">
 <meta property="og:title" content="Atomic类">
 <meta property="og:url" content="http://example.com/2022/05/14/%E6%BA%90%E7%A0%81/JDK/Atomic%E7%B1%BB/index.html">
 <meta property="og:site_name" content="kris&#39; cabin">
+<meta property="og:description" content="Atomic执行流程 多个线程同时执行i++,i初始为0   线程A去判断此时i是否等于0，发现是，就说明没有人改动过，就执行i++，将i改为1 线程B同时去判断此时i是否等于0，发现i变为1，说明有人改动过，就重新查询，并再次去比较。  Atomic底层原理Atomic原子类核心思想：CAS(compare and set)无锁化每次尝试修改的时候，就比对一下有没有人修改过这个值，如果没有人修改">
 <meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://cdn.nlark.com/yuque/0/2022/jpeg/12966419/1648450353522-9fd0ab3c-fbc7-4862-9daa-4f735c3eeb48.jpeg">
 <meta property="article:published_time" content="2022-05-14T11:05:00.000Z">
-<meta property="article:modified_time" content="2022-07-05T15:27:35.678Z">
+<meta property="article:modified_time" content="2022-07-06T09:53:20.959Z">
 <meta property="article:author" content="kris cen">
 <meta property="article:tag" content="JDK">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://cdn.nlark.com/yuque/0/2022/jpeg/12966419/1648450353522-9fd0ab3c-fbc7-4862-9daa-4f735c3eeb48.jpeg">
   
   
   <title>Atomic类 - kris&#39; cabin</title>
@@ -195,7 +199,7 @@
   
     <span class="post-meta mr-2">
       <i class="iconfont icon-chart"></i>
-      0 字
+      4k 字
     </span>
   
 
@@ -204,7 +208,7 @@
       <i class="iconfont icon-clock-fill"></i>
       
       
-      1 分钟
+      33 分钟
     </span>
   
 
@@ -236,7 +240,49 @@
             <h1 style="display: none">Atomic类</h1>
             
             <div class="markdown-body">
-              
+              <h2 id="Atomic执行流程"><a href="#Atomic执行流程" class="headerlink" title="Atomic执行流程"></a>Atomic执行流程</h2><blockquote>
+<p>多个线程同时执行i++,i初始为0</p>
+</blockquote>
+<ol>
+<li>线程A去判断此时i是否等于0，发现是，就说明没有人改动过，就执行i++，将i改为1</li>
+<li>线程B同时去判断此时i是否等于0，发现i变为1，说明有人改动过，就重新查询，并再次去比较。</li>
+</ol>
+<h2 id="Atomic底层原理"><a href="#Atomic底层原理" class="headerlink" title="Atomic底层原理"></a>Atomic底层原理</h2><p>Atomic原子类核心思想：CAS(compare and set)无锁化<br>每次尝试修改的时候，就比对一下有没有人修改过这个值，如果没有人修改，自己就修改，如果有人修改过，就重新查找最新的值，再次重复上面的过程。</p>
+<h2 id="AtomicInteger源码"><a href="#AtomicInteger源码" class="headerlink" title="AtomicInteger源码"></a>AtomicInteger源码</h2><figure class="highlight java"><table><tr><td class="gutter"><div class="code-wrapper"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br></pre></div></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">AtomicInteger</span> <span class="hljs-keyword">extends</span> <span class="hljs-title class_">Number</span> <span class="hljs-keyword">implements</span> <span class="hljs-title class_">java</span>.io.Serializable &#123;<br>    <span class="hljs-keyword">private</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">final</span> <span class="hljs-type">long</span> <span class="hljs-variable">serialVersionUID</span> <span class="hljs-operator">=</span> <span class="hljs-number">6214790243416807050L</span>;<br><br>    <span class="hljs-comment">// setup to use Unsafe.compareAndSwapInt for updates</span><br>    <span class="hljs-keyword">private</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">final</span> <span class="hljs-type">Unsafe</span> <span class="hljs-variable">unsafe</span> <span class="hljs-operator">=</span> Unsafe.getUnsafe();<br>    <span class="hljs-keyword">private</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">final</span> <span class="hljs-type">long</span> valueOffset;<br><br>    <span class="hljs-keyword">static</span> &#123;<br>        <span class="hljs-keyword">try</span> &#123;<br>            valueOffset = unsafe.objectFieldOffset<br>                (AtomicInteger.class.getDeclaredField(<span class="hljs-string">&quot;value&quot;</span>));<br>        &#125; <span class="hljs-keyword">catch</span> (Exception ex) &#123; <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">Error</span>(ex); &#125;<br>    &#125;<br><br>    <span class="hljs-keyword">private</span> <span class="hljs-keyword">volatile</span> <span class="hljs-type">int</span> value;<br><br>    <span class="hljs-comment">/**</span><br><span class="hljs-comment">     * Creates a new AtomicInteger with the given initial value.</span><br><span class="hljs-comment">     *</span><br><span class="hljs-comment">     * <span class="hljs-doctag">@param</span> initialValue the initial value</span><br><span class="hljs-comment">     */</span><br>    <span class="hljs-keyword">public</span> <span class="hljs-title function_">AtomicInteger</span><span class="hljs-params">(<span class="hljs-type">int</span> initialValue)</span> &#123;<br>        value = initialValue;<br>    &#125;<br><br>    <span class="hljs-comment">/**</span><br><span class="hljs-comment">     * Creates a new AtomicInteger with initial value &#123;<span class="hljs-doctag">@code</span> 0&#125;.</span><br><span class="hljs-comment">     */</span><br>    <span class="hljs-keyword">public</span> <span class="hljs-title function_">AtomicInteger</span><span class="hljs-params">()</span> &#123;<br>    &#125;<br><br>    <span class="hljs-comment">/**</span><br><span class="hljs-comment">     * Atomically sets the value to the given updated value</span><br><span class="hljs-comment">     * if the current value &#123;<span class="hljs-doctag">@code</span> ==&#125; the expected value.</span><br><span class="hljs-comment">     *</span><br><span class="hljs-comment">     * <span class="hljs-doctag">@param</span> expect the expected value</span><br><span class="hljs-comment">     * <span class="hljs-doctag">@param</span> update the new value</span><br><span class="hljs-comment">     * <span class="hljs-doctag">@return</span> &#123;<span class="hljs-doctag">@code</span> true&#125; if successful. False return indicates that</span><br><span class="hljs-comment">     * the actual value was not equal to the expected value.</span><br><span class="hljs-comment">     */</span><br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">final</span> <span class="hljs-type">boolean</span> <span class="hljs-title function_">compareAndSet</span><span class="hljs-params">(<span class="hljs-type">int</span> expect, <span class="hljs-type">int</span> update)</span> &#123;<br>        <span class="hljs-keyword">return</span> unsafe.compareAndSwapInt(<span class="hljs-built_in">this</span>, valueOffset, expect, update);<br>    &#125;<br><br>    <span class="hljs-comment">/**</span><br><span class="hljs-comment">     * Atomically sets the value to the given updated value</span><br><span class="hljs-comment">     * if the current value &#123;<span class="hljs-doctag">@code</span> ==&#125; the expected value.</span><br><span class="hljs-comment">     *</span><br><span class="hljs-comment">     * &lt;p&gt;&lt;a href=&quot;package-summary.html#weakCompareAndSet&quot;&gt;May fail</span><br><span class="hljs-comment">     * spuriously and does not provide ordering guarantees&lt;/a&gt;, so is</span><br><span class="hljs-comment">     * only rarely an appropriate alternative to &#123;<span class="hljs-doctag">@code</span> compareAndSet&#125;.</span><br><span class="hljs-comment">     *</span><br><span class="hljs-comment">     * <span class="hljs-doctag">@param</span> expect the expected value</span><br><span class="hljs-comment">     * <span class="hljs-doctag">@param</span> update the new value</span><br><span class="hljs-comment">     * <span class="hljs-doctag">@return</span> &#123;<span class="hljs-doctag">@code</span> true&#125; if successful</span><br><span class="hljs-comment">     */</span><br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">final</span> <span class="hljs-type">boolean</span> <span class="hljs-title function_">weakCompareAndSet</span><span class="hljs-params">(<span class="hljs-type">int</span> expect, <span class="hljs-type">int</span> update)</span> &#123;<br>        <span class="hljs-keyword">return</span> unsafe.compareAndSwapInt(<span class="hljs-built_in">this</span>, valueOffset, expect, update);<br>    &#125;<br><br>    <span class="hljs-comment">/**</span><br><span class="hljs-comment">     * Atomically increments by one the current value.</span><br><span class="hljs-comment">     *</span><br><span class="hljs-comment">     * <span class="hljs-doctag">@return</span> the previous value</span><br><span class="hljs-comment">     */</span><br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">final</span> <span class="hljs-type">int</span> <span class="hljs-title function_">getAndIncrement</span><span class="hljs-params">()</span> &#123;<br>        <span class="hljs-keyword">return</span> unsafe.getAndAddInt(<span class="hljs-built_in">this</span>, valueOffset, <span class="hljs-number">1</span>);<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>volatile value</li>
+<li>使用Unsafe类操作，执行CAS操作<h3 id="Unsafe类"><a href="#Unsafe类" class="headerlink" title="Unsafe类"></a>Unsafe类</h3>Unsafe类是JDK底层类，不允许实例化以及使用其中的方法。Unsafe封装了一些不安全的操作，指针相关的操作。<br>如果在其他地方调用Unsafe.getUnsafe()，会抛出异常。他根据类加载器去判断是否允许调用。<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">private</span> <span class="hljs-title function_">Unsafe</span><span class="hljs-params">()</span> &#123;<br>&#125;<br><br><span class="hljs-meta">@CallerSensitive</span><br><span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> Unsafe <span class="hljs-title function_">getUnsafe</span><span class="hljs-params">()</span> &#123;<br>    <span class="hljs-type">Class</span> <span class="hljs-variable">var0</span> <span class="hljs-operator">=</span> Reflection.getCallerClass();<br>    <span class="hljs-keyword">if</span> (!VM.isSystemDomainLoader(var0.getClassLoader())) &#123;<br>        <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">SecurityException</span>(<span class="hljs-string">&quot;Unsafe&quot;</span>);<br>    &#125; <span class="hljs-keyword">else</span> &#123;<br>        <span class="hljs-keyword">return</span> theUnsafe;<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+<h3 id="valueOffset"><a href="#valueOffset" class="headerlink" title="valueOffset"></a>valueOffset</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">private</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">final</span> <span class="hljs-type">long</span> valueOffset;<br><br><span class="hljs-keyword">static</span> &#123;<br>    <span class="hljs-keyword">try</span> &#123;<br>        valueOffset = unsafe.objectFieldOffset<br>            (AtomicInteger.class.getDeclaredField(<span class="hljs-string">&quot;value&quot;</span>));<br>    &#125; <span class="hljs-keyword">catch</span> (Exception ex) &#123; <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">Error</span>(ex); &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+在类初始化的时候执行，valueOffset表示value这个字段在AtomicInteger类中的偏移量。</li>
+</ul>
+<h3 id="CAS操作"><a href="#CAS操作" class="headerlink" title="CAS操作"></a>CAS操作</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs java">unsafe.getAndAddInt(<span class="hljs-built_in">this</span>, valueOffset, -<span class="hljs-number">1</span>);   <br><br><span class="hljs-keyword">public</span> <span class="hljs-keyword">final</span> <span class="hljs-type">int</span> <span class="hljs-title function_">getAndAddInt</span><span class="hljs-params">(Object var1, <span class="hljs-type">long</span> var2, <span class="hljs-type">int</span> var4)</span> &#123;<br>    <span class="hljs-type">int</span> var5;<br>    <span class="hljs-keyword">do</span> &#123;<br>        var5 = <span class="hljs-built_in">this</span>.getIntVolatile(var1, var2);<br>    &#125; <span class="hljs-keyword">while</span>(!<span class="hljs-built_in">this</span>.compareAndSwapInt(var1, var2, var5, var5 + var4));<br><br>    <span class="hljs-keyword">return</span> var5;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<ol>
+<li>根据传入的类以及value偏移量获取目前的值var5</li>
+<li>compareAndSwapInt，CAS操作，首先又获取了一遍上面的值，然后和var5比较，如果一致就交换，否则失败。如果成功就返回var5。(因为是getAndAdd)</li>
+</ol>
+<h3 id="CAS底层操作"><a href="#CAS底层操作" class="headerlink" title="CAS底层操作"></a>CAS底层操作</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">public</span> <span class="hljs-keyword">final</span> <span class="hljs-keyword">native</span> <span class="hljs-type">boolean</span> <span class="hljs-title function_">compareAndSwapInt</span><span class="hljs-params">(Object var1, <span class="hljs-type">long</span> var2, <span class="hljs-type">int</span> var4, <span class="hljs-type">int</span> var5)</span>;<br></code></pre></td></tr></table></figure>
+<p>底层使用了native方法，走的c代码，可以通过发送一些cpu指令，确保CAS的过程是原子性的。<br>以前的cpu会通过一些指令锁掉一小块内存，后来优化后，可以保证仅仅只有一个线程在同一时间可以对某块小内存的数据做CAS的操作。</p>
+<h2 id="CAS缺点"><a href="#CAS缺点" class="headerlink" title="CAS缺点"></a>CAS缺点</h2><h3 id="ABA问题"><a href="#ABA问题" class="headerlink" title="ABA问题"></a>ABA问题</h3><blockquote>
+<p>线程A获取的值为1<br>线程B操作进行+1<br>线程C操作进行-1<br>CPU切回线程A后，值还是1，但是已经不符合需要进行的操作了</p>
+</blockquote>
+<p>AtomicInteger最多的使用场景在于计数。AtomicStampedReference使用stamp可以解决ABA问题</p>
+<h3 id="无限循环问题"><a href="#无限循环问题" class="headerlink" title="无限循环问题"></a>无限循环问题</h3><blockquote>
+<p>如果存在大量线程进行操作，那么会有很大一部分线程一直在循环尝试</p>
+</blockquote>
+<p>JDK1.8引入了LongAdder来解决，实际是分段CAS的思路</p>
+<h3 id="多变量的原子问题"><a href="#多变量的原子问题" class="headerlink" title="多变量的原子问题"></a>多变量的原子问题</h3><blockquote>
+<p>AtomicInteger只能保证一个变量的原子性。</p>
+</blockquote>
+<p>如果是多个变量可以使用AtomicReference。这个是封装自定义对象的，多个变量可以放一个自定义对象里面，然后会检查对象的应用是不是一个。</p>
+<h2 id="LongAdder"><a href="#LongAdder" class="headerlink" title="LongAdder"></a>LongAdder</h2><p>为了解决普通原子类一直自旋的问题。<br><img src="https://cdn.nlark.com/yuque/0/2022/jpeg/12966419/1648450353522-9fd0ab3c-fbc7-4862-9daa-4f735c3eeb48.jpeg" srcset="/img/loading.gif" lazyload></p>
+<ol>
+<li>当只有少数线程的时候，就共同访问一个base字段</li>
+<li>当线程变多，就会分配一个cell数组，分配线程到不同的cell去访问。当一个线程对其分配的cell操作失败，就会分配到其他cell中。针对不同的cell分段加锁。</li>
+<li>get最终值的时候，会对base和各个cell的值合并计算。因为最开始操作base，线程多起来之后才会操作cell。</li>
+</ol>
+
             </div>
             <hr>
             <div>

@@ -16,16 +16,22 @@
   <meta name="author" content="kris cen">
   <meta name="keywords" content="">
   
-    <meta property="og:type" content="article">
+    <meta name="description" content="Buffer Pool缓存了磁盘上的真实数据。数据的增删改操作其实是对Buffer Pool里的数据进行的，同时配合了后序的redo log、刷盘等机制  配置Buffer Pool默认配置128MB。16核32G的机器，可以给Buffer Pool配置2GB内存  [server]innodb_buffer_pool_size &#x3D; 2147483648  存储结构 缓冲页MySQL对">
+<meta property="og:type" content="article">
 <meta property="og:title" content="Buffer Pool">
 <meta property="og:url" content="http://example.com/2022/05/02/MySQL/BufferPool/index.html">
 <meta property="og:site_name" content="kris&#39; cabin">
+<meta property="og:description" content="Buffer Pool缓存了磁盘上的真实数据。数据的增删改操作其实是对Buffer Pool里的数据进行的，同时配合了后序的redo log、刷盘等机制  配置Buffer Pool默认配置128MB。16核32G的机器，可以给Buffer Pool配置2GB内存  [server]innodb_buffer_pool_size &#x3D; 2147483648  存储结构 缓冲页MySQL对">
 <meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://cdn.nlark.com/yuque/0/2022/png/12966419/1650791907107-69ca6ee0-5331-4e42-bdc3-6c95b584cdb1.png#clientId=uda449db4-43e4-4&crop=0&crop=0&crop=1&crop=1&from=paste&height=585&id=u70ea4a1c&margin=%5Bobject%20Object%5D&name=image.png&originHeight=585&originWidth=1224&originalType=binary&ratio=1&rotation=0&showTitle=false&size=446663&status=done&style=none&taskId=uda47e78b-a7d6-4e94-bf55-59edf571f21&title=&width=1224">
+<meta property="og:image" content="https://cdn.nlark.com/yuque/0/2022/png/12966419/1650886913648-f7bee7cb-4cd2-4025-a803-7bc40d0dd5cb.png#clientId=u75ab20fb-b04d-4&crop=0&crop=0&crop=1&crop=1&from=paste&height=409&id=ub95dbcc4&margin=%5Bobject%20Object%5D&name=image.png&originHeight=409&originWidth=794&originalType=binary&ratio=1&rotation=0&showTitle=false&size=240929&status=done&style=none&taskId=u02e00e08-d6e7-4851-a800-58f95f1d2dd&title=&width=794">
+<meta property="og:image" content="https://cdn.nlark.com/yuque/0/2022/png/12966419/1650888171833-057058f0-7ebf-4956-a76d-c902ddaddfe5.png#clientId=u75ab20fb-b04d-4&crop=0&crop=0&crop=1&crop=1&from=paste&height=487&id=u7a17c79f&margin=%5Bobject%20Object%5D&name=image.png&originHeight=487&originWidth=575&originalType=binary&ratio=1&rotation=0&showTitle=false&size=34262&status=done&style=none&taskId=u518f58a5-1c0a-4f94-a860-f163dc13692&title=&width=575">
 <meta property="article:published_time" content="2022-05-02T11:03:00.000Z">
-<meta property="article:modified_time" content="2022-07-05T15:05:59.754Z">
+<meta property="article:modified_time" content="2022-07-06T08:49:11.310Z">
 <meta property="article:author" content="kris cen">
 <meta property="article:tag" content="MySQL">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://cdn.nlark.com/yuque/0/2022/png/12966419/1650791907107-69ca6ee0-5331-4e42-bdc3-6c95b584cdb1.png#clientId=uda449db4-43e4-4&crop=0&crop=0&crop=1&crop=1&from=paste&height=585&id=u70ea4a1c&margin=%5Bobject%20Object%5D&name=image.png&originHeight=585&originWidth=1224&originalType=binary&ratio=1&rotation=0&showTitle=false&size=446663&status=done&style=none&taskId=uda47e78b-a7d6-4e94-bf55-59edf571f21&title=&width=1224">
   
   
   <title>Buffer Pool - kris&#39; cabin</title>
@@ -195,7 +201,7 @@
   
     <span class="post-meta mr-2">
       <i class="iconfont icon-chart"></i>
-      0 字
+      3.7k 字
     </span>
   
 
@@ -204,7 +210,7 @@
       <i class="iconfont icon-clock-fill"></i>
       
       
-      1 分钟
+      31 分钟
     </span>
   
 
@@ -236,7 +242,133 @@
             <h1 style="display: none">Buffer Pool</h1>
             
             <div class="markdown-body">
-              
+              <blockquote>
+<p>Buffer Pool缓存了磁盘上的真实数据。数据的增删改操作其实是对Buffer Pool里的数据进行的，同时配合了后序的redo log、刷盘等机制</p>
+</blockquote>
+<h1 id="配置"><a href="#配置" class="headerlink" title="配置"></a>配置</h1><p>Buffer Pool默认配置128MB。<br>16核32G的机器，可以给Buffer Pool配置2GB内存</p>
+<blockquote>
+<p>[server]<br>innodb_buffer_pool_size &#x3D; 2147483648</p>
+</blockquote>
+<h1 id="存储结构"><a href="#存储结构" class="headerlink" title="存储结构"></a>存储结构</h1><p><img src="https://cdn.nlark.com/yuque/0/2022/png/12966419/1650791907107-69ca6ee0-5331-4e42-bdc3-6c95b584cdb1.png#clientId=uda449db4-43e4-4&crop=0&crop=0&crop=1&crop=1&from=paste&height=585&id=u70ea4a1c&margin=%5Bobject%20Object%5D&name=image.png&originHeight=585&originWidth=1224&originalType=binary&ratio=1&rotation=0&showTitle=false&size=446663&status=done&style=none&taskId=uda47e78b-a7d6-4e94-bf55-59edf571f21&title=&width=1224" srcset="/img/loading.gif" lazyload alt="image.png"></p>
+<h2 id="缓冲页"><a href="#缓冲页" class="headerlink" title="缓冲页"></a>缓冲页</h2><p>MySQL对数据抽象出一个数据页的概念，把很多行数据放在一个数据页里面，即磁盘文件中会有很多数据页，每一页数据放了很多行数据。<br>如果要更新一行数据，数据库会找到这行数据所在的数据页，然后从磁盘中把这行数据所在的数据页直接加载到Buffer Pool中。<br>默认情况下，磁盘中存放的数据页大小是16KB。<br>存放入Buffer Pool中的数据页，被叫做缓存页。Buffer Pool在默认情况下，一个缓存页的大小和磁盘上的一个数据页大小一一对应，都是16KB。<br>每个缓存页又会有一个描述数据(又叫做控制数据)，大致包含信息：数据页所属的表空间、数据页的编号、缓存页在Buffer Pool中的地址等。<br>由于描述信息的存在，Buffer Pool中的描述数据大概相当于缓存页的5%左右。所以Buffer Pool的大小会比实际设定的大一部分。</p>
+<p>初始化流程</p>
+<ol>
+<li>数据库启动的时候，会按照设置的Buffer Pool大小，再加大一点，去操作系统申请一块内存区域，作为Buffer Pool内存区域</li>
+<li>内存区域申请完毕之后，会按照默认的缓存页的16KB大小以及800字节左右的描述数据大小，在Buffer Pool中划分出一个个缓存页和一个个对应的描述数据</li>
+<li>数据库划分完毕后，所有的缓存页都是空闲的，此时所有的缓存页的描述数据都会放入free链表。</li>
+</ol>
+<p>使用流程</p>
+<ol>
+<li>数据加载到一个缓存页，free链表会移除这个缓存页，然后lru链表的冷数据区域的头部会放入这个缓存页</li>
+<li>如果修改了一个缓存页，flush链表会记住这个脏页，lru链表中还可能会把数据从冷数据区域移动到热数据区域头部去</li>
+<li>如果是查询了一个缓存页，那么此时就会把这个缓存页在lru链表中移动到热数据区域头部去，或者原本在热数据区域中，就移动到头部去。</li>
+</ol>
+<h2 id="free链表"><a href="#free链表" class="headerlink" title="free链表"></a>free链表</h2><p>free链表是一个双向链表数据结构，每个节点就是一个空闲的缓存页的描述数据块的地址。只要一个缓存页是空闲的，他的描述数据块就会放入这个free链表中，每个节点双向链接前后节点，组成双向链表。<br>free链表还存在一个基础节点，引用链表的头节点和尾节点，里面存储了链表中有多少个描述数据块的节点。<br>当磁盘上的数据页读取到对应的缓存页后，会将对应的描述数据写入缓存页的描述数据块中，并将描述数据块从free链表中去除。</p>
+<h2 id="数据页缓存哈希表"><a href="#数据页缓存哈希表" class="headerlink" title="数据页缓存哈希表"></a>数据页缓存哈希表</h2><p>数据库还存在一个哈希表，用表空间号+数据页号作为key，缓存页的地址作为value。<br>当要使用一个数据页的时候，通过表空间号+数据页号作为key，去找个哈希表里查询，如果没有就读取数据页，如果有了就从缓存页读取。<br>每次读取一天个数据页到缓存后，就会在哈希表写入一条数据。</p>
+<h2 id="flush链表"><a href="#flush链表" class="headerlink" title="flush链表"></a>flush链表</h2><p>flush链表也是通过缓存页的描述块中的两个指针，让被修改过的缓存页的描述数据块组成一个双向链表。<br>flush链表中的数据，就是内存里更新过的脏数据，后面需要被刷新回磁盘文件。</p>
+<h2 id="LRU链表"><a href="#LRU链表" class="headerlink" title="LRU链表"></a>LRU链表</h2><p>LRU链表，Least Recently Used，最近最少使用的链表。用于数据淘汰使用。</p>
+<h3 id="简单LRU链表"><a href="#简单LRU链表" class="headerlink" title="简单LRU链表"></a>简单LRU链表</h3><p><strong>流程</strong></p>
+<ol>
+<li>从磁盘加载一个数据页到缓存页的时候，就会将缓存页的描述数据块放到LRU链表的头部。即只要有数据的缓存页，都会在LRU里，并且最近加载的数据的缓存页，会放到LRU链表的头部。</li>
+<li>如果某个缓存页的描述数据块本来在LRU链表尾部，后续只要查询或修改了这个缓存页的数据，也会把这个缓存页挪动到LRU链表的头部去。即最近被访问 过的缓存页都在LRU链表的头部。</li>
+<li>当缓存页满的时候，就把LRU链表尾部的缓存页刷入磁盘，将需要的磁盘数据加载到空闲出来的缓存页中。</li>
+</ol>
+<p><strong>隐患</strong></p>
+<ol>
+<li>当触发了预读机制的时候，LRU链表中其实并不是按访问频繁排序，而是按加载顺序排序。会导致访问频繁的数据给刷掉</li>
+<li>发生全表扫描的时候，会导致加载过多无用数据页，LRU链表的频繁访问数据被排到链尾，被过期掉</li>
+</ol>
+<h3 id="基于冷热数据分离的LRU链表"><a href="#基于冷热数据分离的LRU链表" class="headerlink" title="基于冷热数据分离的LRU链表"></a>基于冷热数据分离的LRU链表</h3><p>LRU链表被拆分为两个部分，一部分是热数据，一部分是冷数据。</p>
+<ul>
+<li>innodb_old_blocks_pct</li>
+</ul>
+<p>冷热数据比例，默认37，冷数据占比37%</p>
+<ul>
+<li>innodb_old_blocks_time</li>
+</ul>
+<p>默认1000毫秒。数据页被加载到缓存页后，过1秒访问这个缓存页，才会被挪动到热数据区</p>
+<p>流程</p>
+<ol>
+<li>第一次被加载的缓存页，会不停的移动到冷数据区域的链表头部</li>
+<li>在第一次加载之后，经过1秒(<code>innodb_old_blocks_time</code>)再被访问，会将他移动到热数据区域的链表头部</li>
+</ol>
+<p>LRU刷盘时机</p>
+<ol>
+<li>主动刷盘</li>
+</ol>
+<p>后台线程每隔一段时间就会把LRU链表的冷数据区域的尾部的一些缓存页，刷入磁盘，清除这几个缓存页，将他们加入回free链表。同时也会将flush链表数据刷回磁盘。</p>
+<ol start="2">
+<li>被动刷盘</li>
+</ol>
+<p>当没有空闲的缓存页的时候，可能所有的free链表都被使用，flush链表中有很多被修改过的缓存页，lru链表中有一大堆的缓存页进行了冷热隔离。<br>此时需要从磁盘数据页加在一个到空闲缓存页中，就会从LRU链表的冷数据区域的尾部找到一个缓存页，将他收入磁盘并清空，然后将数据页加载到这个这个空闲缓存页中。</p>
+<h1 id="生产经验"><a href="#生产经验" class="headerlink" title="生产经验"></a>生产经验</h1><h2 id="多个Buffer-Pool优化并发能力"><a href="#多个Buffer-Pool优化并发能力" class="headerlink" title="多个Buffer Pool优化并发能力"></a>多个Buffer Pool优化并发能力</h2><p>背景</p>
+<blockquote>
+<p>多线程操作Buffer Pool的时候，必然需要加锁。Buffer Pool属于内存中的操作，比较快，但是还是有一定影响。</p>
+</blockquote>
+<p>配置<br>MySQL默认规则：当Buffer Pool分配的内存小于1GB的时候，最多只会给一个Buffer Pool<br>可以修改Buffer Pool数量</p>
+<figure class="highlight ini"><table><tr><td class="gutter"><div class="code-wrapper"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></div></td><td class="code"><pre><code class="hljs ini"><span class="hljs-section">[server]</span><br><span class="hljs-comment"># 将Buffer Pool大小设置为8G</span><br><span class="hljs-attr">innodb_buffer_pool_size</span> = <span class="hljs-number">8589934592</span><br><span class="hljs-comment"># Buffer Pool实例数量设置为4</span><br><span class="hljs-attr">innodb_buffer_pool_instances</span> = <span class="hljs-number">4</span><br></code></pre></td></tr></table></figure>
+
+<h2 id="通过chunk来支持数据库运行期间的Buffer-Pool动态调整"><a href="#通过chunk来支持数据库运行期间的Buffer-Pool动态调整" class="headerlink" title="通过chunk来支持数据库运行期间的Buffer Pool动态调整"></a>通过chunk来支持数据库运行期间的Buffer Pool动态调整</h2><p><strong>chunk机制</strong><br>Buffer Pool由很多个chunk组成，大小由<code>innodb_buffer_pool_size</code>控制，默认值128MB。<br><img src="https://cdn.nlark.com/yuque/0/2022/png/12966419/1650886913648-f7bee7cb-4cd2-4025-a803-7bc40d0dd5cb.png#clientId=u75ab20fb-b04d-4&crop=0&crop=0&crop=1&crop=1&from=paste&height=409&id=ub95dbcc4&margin=%5Bobject%20Object%5D&name=image.png&originHeight=409&originWidth=794&originalType=binary&ratio=1&rotation=0&showTitle=false&size=240929&status=done&style=none&taskId=u02e00e08-d6e7-4851-a800-58f95f1d2dd&title=&width=794" srcset="/img/loading.gif" lazyload alt="image.png"></p>
+<p>假如Buffer Pool现在8G需要动态加到16G，此时需要申请一系列的128MB大小的chunk，每个chunk是连续的128MB内存。然后将申请到的chunk内存分配给buffer pool。</p>
+<h2 id="设置Buffer-Pool"><a href="#设置Buffer-Pool" class="headerlink" title="设置Buffer Pool"></a>设置Buffer Pool</h2><p>Buffer Pool总大小 &#x3D; (chunk大小 * Buffer Pool数量) 的倍数<br>比如：默认chunk代销128MB，此时机器内存32GB，假如给Buffer Pool总大小20G上下，那么需要估算Buffer Pool数量。假设Buffer Pool数量16个，此时chunk大小 * Buffer Pool数量 &#x3D; 2048MB，Buffer Pool总大小是2048MB的10倍，可以。</p>
+<h2 id="参数查看"><a href="#参数查看" class="headerlink" title="参数查看"></a>参数查看</h2><p><code>SHOW ENGINE INNODB STATUS</code> 查看InnoDB信息<br><img src="https://cdn.nlark.com/yuque/0/2022/png/12966419/1650888171833-057058f0-7ebf-4956-a76d-c902ddaddfe5.png#clientId=u75ab20fb-b04d-4&crop=0&crop=0&crop=1&crop=1&from=paste&height=487&id=u7a17c79f&margin=%5Bobject%20Object%5D&name=image.png&originHeight=487&originWidth=575&originalType=binary&ratio=1&rotation=0&showTitle=false&size=34262&status=done&style=none&taskId=u518f58a5-1c0a-4f94-a860-f163dc13692&title=&width=575" srcset="/img/loading.gif" lazyload alt="image.png"></p>
+<ul>
+<li>Total memory allocated</li>
+</ul>
+<p>buffer pool最终的总大小</p>
+<ul>
+<li>Buffer pool size</li>
+</ul>
+<p>buffer pool一共能容纳多少缓存页</p>
+<ul>
+<li>Free buffers</li>
+</ul>
+<p>free链表中一共多少个空闲的缓存页可用</p>
+<ul>
+<li>Database pages&#x2F;Old database pages</li>
+</ul>
+<p>lru链表中一共多少个缓存页，以及冷热数据区域里的缓存页数量</p>
+<ul>
+<li>Modified db pages</li>
+</ul>
+<p>flush链表中的缓存页数量</p>
+<ul>
+<li>Pending reads和Pending writes</li>
+</ul>
+<p>等待从磁盘上加载进缓存页的数量，还有就是即将从lru链表中刷入磁盘的数量、即将从flush链表中刷入磁盘的数量</p>
+<ul>
+<li>Pages made young和not young</li>
+</ul>
+<p>lru冷数据区域里访问之后转移到热数据区域的缓存页的数量，以及在lru冷数据区域里1s内被访问了没进入热数据区域的缓存页的数量</p>
+<ul>
+<li>youngs&#x2F;s和not youngs&#x2F;s</li>
+</ul>
+<p>每秒从冷数据区域进入热数据区域的缓存页的数量，以及每秒在冷数据区域里被访问了但是不能进入热数据区域的缓存页的数量</p>
+<ul>
+<li>Pages read xxxx, created xxx, written xxx，xx reads&#x2F;s, xx creates&#x2F;s, 1xx writes&#x2F;s</li>
+</ul>
+<p>已经读取、创建和写入了多少个缓存页，以及每秒钟读取、创建和写入的缓存页数量</p>
+<ul>
+<li>Buffer pool hit rate xxx &#x2F; 1000</li>
+</ul>
+<p>每1000次访问，有多少次是直接命中了buffer pool里的缓存的</p>
+<ul>
+<li>young-making rate xxx &#x2F; 1000 not xx &#x2F; 1000</li>
+</ul>
+<p>每1000次访问，有多少次访问让缓存页从冷数据区域移动到了热数据区域，以及没移动的缓存页数量</p>
+<ul>
+<li>LRU len</li>
+</ul>
+<p>lru链表里的缓存页的数量</p>
+<ul>
+<li>I&#x2F;O sum</li>
+</ul>
+<p>最近50s读取磁盘页的总数</p>
+<ul>
+<li>I&#x2F;O cur</li>
+</ul>
+<p>现在正在读取磁盘页的数量</p>
+
             </div>
             <hr>
             <div>

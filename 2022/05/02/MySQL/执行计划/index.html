@@ -16,16 +16,23 @@
   <meta name="author" content="kris cen">
   <meta name="keywords" content="">
   
-    <meta property="og:type" content="article">
+    <meta name="description" content="概述单表查询constselect * from table where id&#x3D;xselect * from table where name&#x3D;x通过聚簇索引或者二级索引+聚簇索引回源，这种根据索引直接快速查找数据的过程叫做const，标识性能超高的常量级。此时二级索引必须是唯一索引unique key refselect * from table where name&#x3D;x二级索引是个普通的key">
+<meta property="og:type" content="article">
 <meta property="og:title" content="执行计划">
 <meta property="og:url" content="http://example.com/2022/05/02/MySQL/%E6%89%A7%E8%A1%8C%E8%AE%A1%E5%88%92/index.html">
 <meta property="og:site_name" content="kris&#39; cabin">
+<meta property="og:description" content="概述单表查询constselect * from table where id&#x3D;xselect * from table where name&#x3D;x通过聚簇索引或者二级索引+聚簇索引回源，这种根据索引直接快速查找数据的过程叫做const，标识性能超高的常量级。此时二级索引必须是唯一索引unique key refselect * from table where name&#x3D;x二级索引是个普通的key">
 <meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://cdn.nlark.com/yuque/0/2022/png/12966419/1651154231783-dc794190-9b5e-4a43-9f9e-93feb50cf432.png#clientId=u6f51e465-8d3d-4&crop=0&crop=0&crop=1&crop=1&from=paste&height=185&id=ufe0d7622&margin=%5Bobject%20Object%5D&name=image.png&originHeight=185&originWidth=702&originalType=binary&ratio=1&rotation=0&showTitle=false&size=11279&status=done&style=none&taskId=uc59c3420-2eaa-4dc6-a8cb-a03ea1cc254&title=&width=702">
+<meta property="og:image" content="https://cdn.nlark.com/yuque/0/2022/png/12966419/1651154222755-07924e56-b3a4-4f44-ae72-4a50d00e50b7.png#clientId=u6f51e465-8d3d-4&crop=0&crop=0&crop=1&crop=1&from=paste&height=248&id=u64de7c72&margin=%5Bobject%20Object%5D&name=image.png&originHeight=248&originWidth=861&originalType=binary&ratio=1&rotation=0&showTitle=false&size=17630&status=done&style=none&taskId=ufe6096c4-73ae-4004-82e5-1769e7f0096&title=&width=861">
+<meta property="og:image" content="https://cdn.nlark.com/yuque/0/2022/png/12966419/1651154054622-60564c68-52ed-4557-9c67-bec17dabd82c.png#clientId=u6f51e465-8d3d-4&crop=0&crop=0&crop=1&crop=1&from=paste&height=209&id=u4474de85&margin=%5Bobject%20Object%5D&name=image.png&originHeight=209&originWidth=779&originalType=binary&ratio=1&rotation=0&showTitle=false&size=17900&status=done&style=none&taskId=u4b3f4d6d-339d-4b86-b52f-0a055a3eb2c&title=&width=779">
+<meta property="og:image" content="https://cdn.nlark.com/yuque/0/2022/png/12966419/1651155312125-059a8a52-b570-4dae-a73d-5ed55a89d5ac.png#clientId=u6f51e465-8d3d-4&crop=0&crop=0&crop=1&crop=1&from=paste&height=253&id=u4a29867c&margin=%5Bobject%20Object%5D&name=image.png&originHeight=253&originWidth=844&originalType=binary&ratio=1&rotation=0&showTitle=false&size=19959&status=done&style=none&taskId=u9fe19f38-221f-421d-8cb6-1e6f6e19c78&title=&width=844">
 <meta property="article:published_time" content="2022-05-02T11:09:00.000Z">
-<meta property="article:modified_time" content="2022-07-05T15:07:29.895Z">
+<meta property="article:modified_time" content="2022-07-06T09:05:58.909Z">
 <meta property="article:author" content="kris cen">
 <meta property="article:tag" content="MySQL">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://cdn.nlark.com/yuque/0/2022/png/12966419/1651154231783-dc794190-9b5e-4a43-9f9e-93feb50cf432.png#clientId=u6f51e465-8d3d-4&crop=0&crop=0&crop=1&crop=1&from=paste&height=185&id=ufe0d7622&margin=%5Bobject%20Object%5D&name=image.png&originHeight=185&originWidth=702&originalType=binary&ratio=1&rotation=0&showTitle=false&size=11279&status=done&style=none&taskId=uc59c3420-2eaa-4dc6-a8cb-a03ea1cc254&title=&width=702">
   
   
   <title>执行计划 - kris&#39; cabin</title>
@@ -195,7 +202,7 @@
   
     <span class="post-meta mr-2">
       <i class="iconfont icon-chart"></i>
-      0 字
+      5.8k 字
     </span>
   
 
@@ -204,7 +211,7 @@
       <i class="iconfont icon-clock-fill"></i>
       
       
-      1 分钟
+      49 分钟
     </span>
   
 
@@ -236,7 +243,244 @@
             <h1 style="display: none">执行计划</h1>
             
             <div class="markdown-body">
-              
+              <h1 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h1><h2 id="单表查询"><a href="#单表查询" class="headerlink" title="单表查询"></a>单表查询</h2><h3 id="const"><a href="#const" class="headerlink" title="const"></a>const</h3><p><code>select * from table where id=x</code><br><code>select * from table where name=x</code><br>通过聚簇索引或者二级索引+聚簇索引回源，这种根据索引直接快速查找数据的过程叫做<code>const</code>，标识性能超高的常量级。<br>此时二级索引必须是唯一索引<code>unique key</code></p>
+<h3 id="ref"><a href="#ref" class="headerlink" title="ref"></a>ref</h3><p><code>select * from table where name=x</code><br>二级索引是个普通的key索引，不是唯一索引。查询速度也很快</p>
+<p><code>select * from table where name = x and age = x and xx =xx</code><br><code>KEY(name,age,xx)</code><br>如果是包含多列的普通索引的话，必须从索引最左侧开始连续多个列都是等值比较</p>
+<p><code>name IS NULL</code><br>name即使是主键或者唯一索引，还是只能走ref的方式</p>
+<p>ref就是用了普通的索引，或者主键&#x2F;唯一索引改了一个IS NULL&#x2F;IS NOT NULL</p>
+<h3 id="ref-or-null"><a href="#ref-or-null" class="headerlink" title="ref_or_null"></a>ref_or_null</h3><p><code>select * from table where name = x or name IS NULL</code><br>这种同时比较了一个值还限定了IS NULL，就叫做<code>ref_or_null</code></p>
+<p>ref_or_null实际上就是在二级索引里搜你要的值以及是NULL的值，再回源到聚簇索引里查。</p>
+<h3 id="range"><a href="#range" class="headerlink" title="range"></a>range</h3><p>SQL查询里有范围查询的时候</p>
+<p><code>select* from table where age &gt;= x and age &lt;=x</code><br>age为普通索引，此时用索引进行范围筛选。一旦用了索引做范围筛选，就是range</p>
+<h3 id="index"><a href="#index" class="headerlink" title="index"></a>index</h3><p>只需要遍历二级索引就可以得到的数据，而不需要回源到聚簇索引的访问方式，叫做index访问方式</p>
+<p><code>select x1,x2,x3 from table where x2 = xxx</code><br><code>KEY(x1,x2,x3)</code><br>此时无法从联合索引的根节点开始二分查找，由于查询的字段就是联合索引的字段，数据直接在普通索引的叶子结点存储。所以就遍历这个联合索引树的叶子结点，找到x2&#x3D;xxx的数据。<br>遍历二级索引的过程要比遍历聚簇索引快。</p>
+<h3 id="index-merge"><a href="#index-merge" class="headerlink" title="index_merge"></a>index_merge</h3><p>特殊场景下针对单表查询可能会基于多个索引提取数据后进行合并，此时查询方式为index_merge</p>
+<h3 id="all"><a href="#all" class="headerlink" title="all"></a>all</h3><p>全表扫描，直接扫描聚簇索引的所有叶子节点</p>
+<h2 id="多表关联查询"><a href="#多表关联查询" class="headerlink" title="多表关联查询"></a>多表关联查询</h2><h3 id="内连接查询"><a href="#内连接查询" class="headerlink" title="内连接查询"></a>内连接查询</h3><p><code>select * from t1,t2 where t1.x1 = xxx and t1.x2=t2.x2 and t2.x3 = xxx</code></p>
+<ol>
+<li>根据t1.x1&#x3D;xxx 去t1走t1索引筛选一部分数据</li>
+<li>假设筛选2个数据，根据每个数据x2的值，以及x3 &#x3D; xxx两个条件，去t2表找x2字段值和x3字段值匹配的数据。</li>
+</ol>
+<p>先从一个表查询一波数据，比如t1,叫做驱动表<br>根据前面的数据去另一个表进行关联，比如t2，叫做被驱动表</p>
+<h3 id="外连接查询"><a href="#外连接查询" class="headerlink" title="外连接查询"></a>外连接查询</h3><p><code>LEFT JOIN  ON</code></p>
+<h3 id="eq-ref"><a href="#eq-ref" class="headerlink" title="eq_ref"></a>eq_ref</h3><p><code>EXPLAIN SELECT * FROM t1 INNER JOIN t2 ON t1.id = t2.id</code><br>关联查询的时候，针对t2的type为<code>eq_ref</code>表示针对t1表全表扫描获取到的每条数据，都会去t2表基于主键进行等值匹配，此时会在t2表的聚簇索引里根据主键值进行快速查找。所以在连接查询时，针对被驱动表如果基于主键进行了等值匹配，那么查询方式就是eq_ref。</p>
+<h3 id="嵌套循环关联nested-loop-join"><a href="#嵌套循环关联nested-loop-join" class="headerlink" title="嵌套循环关联nested-loop join"></a>嵌套循环关联nested-loop join</h3><p>假设两个表一起执行关联，会先在一个驱动表里根据where筛选出一波数据，比如10条。<br>在根据10条数据走循环，用每条数据到另一个驱动表去根据ON连接条件和WHERE里的被驱动表筛选条件去查询数据，找出来的数据就进行关联。<br>针对多表查询的语句，要尽量给两个表都加上索引，确保从驱动表的查询通过索引去查询，对被驱动表的查询也通过索引去查找。</p>
+<h1 id="执行计划"><a href="#执行计划" class="headerlink" title="执行计划"></a>执行计划</h1><h2 id="索引选择"><a href="#索引选择" class="headerlink" title="索引选择"></a>索引选择</h2><ul>
+<li>单索引选择</li>
+</ul>
+<p>选择一个最优的索引路径进行查询</p>
+<ul>
+<li>多索引选择</li>
+</ul>
+<p>比较少出现，对多个索引树进行查找，用intersection交集、union并集的方式合并数据<br><code>select *from table where x1 = xx and x2 = xx</code><br>如果x1索引和x2索引查出来的数据都很多，可能会针对两个索引查出两个结果集，取交集<br>有硬性条件要求：</p>
+<ol>
+<li>如果有联合索引，必须把联合索引里每个字段都放在SQL中，且必须是等值匹配</li>
+<li>如果是通过主键查询+其他二级索引等值匹配</li>
+</ol>
+<h2 id="MySQL成本与执行计划优化"><a href="#MySQL成本与执行计划优化" class="headerlink" title="MySQL成本与执行计划优化"></a>MySQL成本与执行计划优化</h2><h3 id="成本预估"><a href="#成本预估" class="headerlink" title="成本预估"></a>成本预估</h3><p>从磁盘读数据到内存的IO成本，MySQL是一页一页读取的，约定读一页的成本为1.0。<br>得到数据后，对数据进行运算，比如排序和分组等，约定读取和检测一条数据是否符合条件的成本为0.2。</p>
+<h3 id="全表扫描执行计划成本计算"><a href="#全表扫描执行计划成本计算" class="headerlink" title="全表扫描执行计划成本计算"></a>全表扫描执行计划成本计算</h3><p><code>show table status like &quot;表名&quot;</code><br>获取表的统计信息。</p>
+<ul>
+<li>rows</li>
+</ul>
+<p>表里的记录数</p>
+<ul>
+<li>data_length</li>
+</ul>
+<p>表的聚簇索引的字节数大小<br>data_length&#x2F;1024&#x2F;16(默认一页大小) &#x3D; 数据页数量</p>
+<p>IO成本 &#x3D; 数据页数量 * 1.0 + 微调值<br>CPU成本 &#x3D; 行记录数 * 0.2 + 微调值<br>总成本 &#x3D; IO成本 + CPU成本</p>
+<h3 id="索引执行计划成本计算"><a href="#索引执行计划成本计算" class="headerlink" title="索引执行计划成本计算"></a>索引执行计划成本计算</h3><ol>
+<li>首先在二级索引里面根据条件查询一部分数据的IO成本，一般看查询条件涉及几个范围。</li>
+</ol>
+<p>一般一个范围区间大概认为等同于一个数据页，所以此时可能根据二级索引查询的时候，这个IO成本都会预估很小，n * 1.0 &#x3D; n 基本都是个位数级别</p>
+<ol start="2">
+<li>估算从二级索引里读取符合条件的数据的成本，估算在二级索引里查出多少数据。 行记录数 * 0.2 + 微调值</li>
+<li>回表到聚簇索引查询数据，直接默认一条数据会需要回表到聚簇索引查询一个数据页 行记录数 * 1.0 + 微调值</li>
+<li>二级索引查询数据，回表得到完整值后，进行后续条件判断。 行记录数 * 0.2 + 微调值</li>
+</ol>
+<h3 id="Mysql执行执行计划规则"><a href="#Mysql执行执行计划规则" class="headerlink" title="Mysql执行执行计划规则"></a>Mysql执行执行计划规则</h3><ol>
+<li>MySQL在真正执行的时候，会对SQL进行一些改动</li>
+<li>针对子查询进行优化</li>
+</ol>
+<p><code>select * from t1 where x1 = (select x1 from t2 where id = xxx)</code></p>
+<ol>
+<li>先执行子查询，直接根据主键定位一条数据的x1字段</li>
+<li>执行<code>select * from t1 where x1 = 结果</code></li>
+</ol>
+<p><code>select * from t1 where x1 = (select x1 from t2 where t1.x2 = t2.x2)</code><br>子查询的条件需要依赖t1的值</p>
+<ol>
+<li>先遍历t1表中每一条数据，对每一条数据取出x2，放到子查询</li>
+<li>t2表的某条数据的x1字段值放到外层去判断</li>
+</ol>
+<p><code>select * from t1 where x1 in (select x2 from t2 where x3 = xxx)</code></p>
+<ol>
+<li>先执行子查询，将查询出来的数据写入临时表，也叫物化表</li>
+</ol>
+<p>物化表可能基于memory存储引擎通过内存存放。如果结果集太大，则可能用普通的B+树聚簇索引的方式放在磁盘上。物化表都会建立索引。中间结果数据写入物化表是有索引的</p>
+<ol start="2">
+<li>如果t1数据量大，会将物化表作为驱动表先查询。</li>
+</ol>
+<p><code>select * from t1 where x1 in (select x2 from t2 where x3 = xxx)</code><br>底层会将这个转化为半连接<br><code>select t1.* from t1 semi join t2 on t1.x1 = t2.x2 and t2.x3 = xxx</code><br>语义上和IN语句+子查询一样。对于t1表而言，只要在t2表有符合t1.x1 &#x3D; t2.x2 和 t2.x3 &#x3D; xxx的数据，就可以筛选出来</p>
+<h1 id="explain"><a href="#explain" class="headerlink" title="explain"></a>explain</h1><p><code>EXPLAIN 查询语句</code></p>
+<h2 id="概述-1"><a href="#概述-1" class="headerlink" title="概述"></a>概述</h2><h3 id="格式"><a href="#格式" class="headerlink" title="格式"></a>格式</h3><figure class="highlight jboss-cli"><table><tr><td class="gutter"><div class="code-wrapper"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></div></td><td class="code"><pre><code class="hljs jboss-cli">+<span class="hljs-params">----</span>+<span class="hljs-params">-------------</span>+<span class="hljs-params">---------------</span>+<span class="hljs-params">------------</span>+<span class="hljs-params">------</span>+<span class="hljs-params">---------------</span>+<span class="hljs-params">------</span>+<span class="hljs-params">---------</span>+<span class="hljs-params">------</span>+<span class="hljs-params">------</span>+<span class="hljs-params">----------</span>+<span class="hljs-params">-------</span>+<br>| id | select_type | table         | partitions | type | possible_keys | key  | key_len | ref  | rows | filtered | Extra |<br>+<span class="hljs-params">----</span>+<span class="hljs-params">-------------</span>+<span class="hljs-params">---------------</span>+<span class="hljs-params">------------</span>+<span class="hljs-params">------</span>+<span class="hljs-params">---------------</span>+<span class="hljs-params">------</span>+<span class="hljs-params">---------</span>+<span class="hljs-params">------</span>+<span class="hljs-params">------</span>+<span class="hljs-params">----------</span>+<span class="hljs-params">-------</span>+<br>|  1 | SIMPLE      | table_name    | NULL       | ALL  | NULL          | NULL | NULL    | NULL |    1 |   100.00 | NULL  |<br>+<span class="hljs-params">----</span>+<span class="hljs-params">-------------</span>+<span class="hljs-params">---------------</span>+<span class="hljs-params">------------</span>+<span class="hljs-params">------</span>+<span class="hljs-params">---------------</span>+<span class="hljs-params">------</span>+<span class="hljs-params">---------</span>+<span class="hljs-params">------</span>+<span class="hljs-params">------</span>+<span class="hljs-params">----------</span>+<span class="hljs-params">-------</span>+<br></code></pre></td></tr></table></figure>
+
+<ul>
+<li>id</li>
+</ul>
+<p>有一个SELECT语句就会对应一个id。<br>有时候一个SELECT语句涉及到了多个表，所以会对应多条执行计划，但是他们的执行计划id是一样的。<br>id越大越先执行，相同id从上到下执行。</p>
+<ul>
+<li>select_type</li>
+</ul>
+<p>这一条执行计划对应的查询是什么查询类型。一个大SQL中，不同的SELECT代表了一个什么角色。</p>
+<ul>
+<li>SIMPLE</li>
+</ul>
+<p>简单的 select 查询,查询中不包含子查询或者UNION</p>
+<ul>
+<li>PRIMARY</li>
+</ul>
+<p>为复杂查询创建的首要表(也是最外层的表) 这种类型通常与DERIVED 或者 UNION 混合使用见到</p>
+<ul>
+<li>UNION</li>
+</ul>
+<p>当SELECT 之前的关键字为UNION 或 UNION ALL时 会出现UNION 关键字</p>
+<ul>
+<li>DEPENDENT UNION</li>
+</ul>
+<p>当子查询中存在UNION时UNION 后的 select_type 会出现 DEPENDENT UNION 而union 语句的第一行为 DEPENDENT SUBQUERY</p>
+<ul>
+<li>UNION RESULT</li>
+</ul>
+<p>出现在UNION 或UNION ALL语句中 代表把所有结果集联合起来</p>
+<ul>
+<li>SUBQUERY</li>
+</ul>
+<p>出现在复杂非相关子查询中 ,简单相关子查询MySQL会进行改写</p>
+<ul>
+<li>DEPENDENT SUBQUERY</li>
+</ul>
+<p>出现在相关子查询中而非相关子查询MySQL可以进行改写</p>
+<ul>
+<li>DERIVED</li>
+</ul>
+<p>衍生表当查询使用内联视图时会出现此关键字</p>
+<ul>
+<li>MATERIALIZED</li>
+</ul>
+<p>子查询物化 ,当表出现在非相关子查询中并且需要进行物化时会出现MATERIALIZED关键词</p>
+<ul>
+<li>UNCACHEABLE SUBQUERY</li>
+</ul>
+<p>表示子查询不可被物化需要逐次运行</p>
+<ul>
+<li>UNCACHEABLE UNION</li>
+</ul>
+<p>子查询中出现UNION并且不可被缓存在UNION 后的 SELECT 语句出现此关键词</p>
+<ul>
+<li>table</li>
+</ul>
+<p>要查询的表名</p>
+<ul>
+<li>partitions</li>
+</ul>
+<p>表分区</p>
+<ul>
+<li>type</li>
+</ul>
+<p>针对当前表的访问方法，比如const、ref、rang、index、all。分别岱庙了聚簇索引、二级索引、全表扫描之类。</p>
+<ul>
+<li><p>const</p>
+</li>
+<li><p>ref</p>
+</li>
+<li><p>ref_or_null</p>
+</li>
+<li><p>eq_ref</p>
+</li>
+<li><p>range</p>
+</li>
+<li><p>index</p>
+</li>
+<li><p>index_merge</p>
+</li>
+<li><p>all</p>
+</li>
+<li><p>possible_keys</p>
+</li>
+</ul>
+<p>与type结合，type确定了访问方式，可供选择的索引类型会放在这</p>
+<ul>
+<li>key</li>
+</ul>
+<p>实际选择的索引</p>
+<ul>
+<li>key_len</li>
+</ul>
+<p>索引长度</p>
+<ul>
+<li>ref</li>
+</ul>
+<p>使用某个字段的索引进行等值匹配搜索的时候，跟索引列进行等值匹配的那个目标值的信息</p>
+<ul>
+<li>rows</li>
+</ul>
+<p>预估通过索引或别的方式访问这个表的时候，大概会读取多少数据</p>
+<ul>
+<li>filtered</li>
+</ul>
+<p>经过搜索条件过滤之后的剩余数据的百分比</p>
+<ul>
+<li>extra</li>
+</ul>
+<p>额外的信息</p>
+<h3 id="extra信息"><a href="#extra信息" class="headerlink" title="extra信息"></a>extra信息</h3><ul>
+<li>Using index</li>
+</ul>
+<p><code>select * from t1 where x1=&#39;xxx&#39;</code><br>这次查询，仅仅涉及到了一个二级索引，不需要回表。</p>
+<ul>
+<li>Using index condition</li>
+</ul>
+<p><code>select * from t1 where x1&gt;&#39;xxx&#39; and x1 like &#39;%xxx&#39;</code><br>二级索引查询出来的结果还需要进行额外的条件比对。</p>
+<ul>
+<li>Using where</li>
+</ul>
+<p>针对一个表扫描，没用到索引，并且where里好几个条件，就会表示使用了Using where。<br>或者用到了索引，除了索引之外，还需要使用其他字段进行筛选。</p>
+<ul>
+<li>join buffer</li>
+</ul>
+<p>在多表关联的时候，关联条件并不是索引，此时会用join buffer的内存技术提升关联的性能</p>
+<ul>
+<li>Using filesort</li>
+</ul>
+<p>如如果排序的时候没有用到索引，会基于内存或者磁盘文件排序，大部分的时候都基于磁盘文件排序。<br>此时性能极差。</p>
+<ul>
+<li>Using temporary</li>
+</ul>
+<p>如果group by、union、distinct之类的语法没法直接使用索引进行分组聚合，那么会基于临时表完成，也存在大量的磁盘文件操作，效率极低。</p>
+<h2 id="分析"><a href="#分析" class="headerlink" title="分析"></a>分析</h2><h3 id="案例1"><a href="#案例1" class="headerlink" title="案例1"></a>案例1</h3><p>单表查询<br><code>EXPLAIN SELECT * FROM t1</code><br><img src="https://cdn.nlark.com/yuque/0/2022/png/12966419/1651154231783-dc794190-9b5e-4a43-9f9e-93feb50cf432.png#clientId=u6f51e465-8d3d-4&crop=0&crop=0&crop=1&crop=1&from=paste&height=185&id=ufe0d7622&margin=%5Bobject%20Object%5D&name=image.png&originHeight=185&originWidth=702&originalType=binary&ratio=1&rotation=0&showTitle=false&size=11279&status=done&style=none&taskId=uc59c3420-2eaa-4dc6-a8cb-a03ea1cc254&title=&width=702" srcset="/img/loading.gif" lazyload alt="image.png"><br>走全表扫描</p>
+<h3 id="案例2"><a href="#案例2" class="headerlink" title="案例2"></a>案例2</h3><p>多表关联查询<br><code>EXPLAIN SELECT * FROM t1 join t2</code><img src="https://cdn.nlark.com/yuque/0/2022/png/12966419/1651154222755-07924e56-b3a4-4f44-ae72-4a50d00e50b7.png#clientId=u6f51e465-8d3d-4&crop=0&crop=0&crop=1&crop=1&from=paste&height=248&id=u64de7c72&margin=%5Bobject%20Object%5D&name=image.png&originHeight=248&originWidth=861&originalType=binary&ratio=1&rotation=0&showTitle=false&size=17630&status=done&style=none&taskId=ufe6096c4-73ae-4004-82e5-1769e7f0096&title=&width=861" srcset="/img/loading.gif" lazyload alt="image.png"></p>
+<ol>
+<li>首先访问第一个表t1，使用ALL方式全表扫描，扫出了3457条数据</li>
+<li>访问表t2，因为是多表关联，存在笛卡尔积，t1表的每条数据都会去t2表全表扫描所有的4568条数据，和t2每条数据进行一个关联。Extra表明<code>Nested Loop</code>，就是嵌套循环的访问方式</li>
+</ol>
+<p>由于一个select所以id是一个。</p>
+<h3 id="案例3"><a href="#案例3" class="headerlink" title="案例3"></a>案例3</h3><p>子查询语句<br><code>EXPLAIN SELECT * FROM t1 WHERE x1 IN (SELECT x1 FROM t2) OR x3 = &#39;xxx&#39;</code><br><img src="https://cdn.nlark.com/yuque/0/2022/png/12966419/1651154054622-60564c68-52ed-4557-9c67-bec17dabd82c.png#clientId=u6f51e465-8d3d-4&crop=0&crop=0&crop=1&crop=1&from=paste&height=209&id=u4474de85&margin=%5Bobject%20Object%5D&name=image.png&originHeight=209&originWidth=779&originalType=binary&ratio=1&rotation=0&showTitle=false&size=17900&status=done&style=none&taskId=u4b3f4d6d-339d-4b86-b52f-0a055a3eb2c&title=&width=779" srcset="/img/loading.gif" lazyload alt="image.png"></p>
+<ol>
+<li>主查询的id为1，子查询id为2</li>
+<li>第一条执行计划的select_type为<code>PRIMARY</code>,说明第一个执行计划的查询类型是主查询。possible_keys里存在index_x3，但是key里实际为NULL，并且type为ALL，说明查询并没有会用索引，而是走了全表扫描</li>
+</ol>
+<p>根据成本分析，可能x3字段使用索引扫描xxx的值，和全表扫描的代价差不多。</p>
+<ol start="3">
+<li>第二条执行计划，select_type为<code>SUBQUERY</code>子查询。子查询针对t2表，子查询本身就是全表查询，但是对主查询而言，会使用x1 in这个筛选条件，type为index,key为index_x1，说明使用了x1字段的二级索引的方式，直接扫描x1字段的二级索引，跟子查询的结果集比对。<h3 id="案例4"><a href="#案例4" class="headerlink" title="案例4"></a>案例4</h3>union语句<br><code>EXPLAIN SELECT * FROM t1 UNION SELECT * FROM t2</code><br><img src="https://cdn.nlark.com/yuque/0/2022/png/12966419/1651155312125-059a8a52-b570-4dae-a73d-5ed55a89d5ac.png#clientId=u6f51e465-8d3d-4&crop=0&crop=0&crop=1&crop=1&from=paste&height=253&id=u4a29867c&margin=%5Bobject%20Object%5D&name=image.png&originHeight=253&originWidth=844&originalType=binary&ratio=1&rotation=0&showTitle=false&size=19959&status=done&style=none&taskId=u9fe19f38-221f-421d-8cb6-1e6f6e19c78&title=&width=844" srcset="/img/loading.gif" lazyload alt="image.png"><br>union会将两个结果集合并然后去重。第三条执行计划去进行去重。</li>
+</ol>
+<p>table是&lt;union1,2&gt;,是一个临时表名。extra里面是Using temporary，就是表示使用了临时表。</p>
+<h1 id="SQL调优"><a href="#SQL调优" class="headerlink" title="SQL调优"></a>SQL调优</h1><p>SQL调优的核心，分析执行计划里哪些地方出现了全表扫描或者扫描数据过大，尽可能通过合理优化索引保证执行计划每个步骤都可以基于索引执行，避免扫描过多的数据。</p>
+<ul>
+<li>禁止MySQL半连接或者改变SQL预计结构避免自动半连接优化</li>
+<li>通过force index强制某个SQL走指定索引</li>
+<li>可能是MySQL机器负载过高导致SQL执行慢</li>
+</ul>
+<h2 id="工具"><a href="#工具" class="headerlink" title="工具"></a>工具</h2><h3 id="profiling"><a href="#profiling" class="headerlink" title="profiling"></a>profiling</h3><p>可以对SQL语句的执行耗时进行深入和细致的分析。</p>
+
             </div>
             <hr>
             <div>

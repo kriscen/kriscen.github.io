@@ -16,16 +16,20 @@
   <meta name="author" content="kris cen">
   <meta name="keywords" content="">
   
-    <meta property="og:type" content="article">
+    <meta name="description" content="MySQL机器选型 Java应用系统部署机器  2核4G或者4核8G4核8G的机器根据请求处理速度，从每秒1.200到每秒7.800都可能。正常情况在4.500左右  数据库部署机器  最低配置8核16G,一般16核32G16核32G的机器每秒2.3000并发没问题 MySQL压测相关概念QPS：Query Per Second 每秒处理请求数TPS：Transaction Per Second">
+<meta property="og:type" content="article">
 <meta property="og:title" content="MySQL部署与扩展">
 <meta property="og:url" content="http://example.com/2022/05/02/MySQL/MySQL%E9%83%A8%E7%BD%B2%E4%B8%8E%E6%89%A9%E5%B1%95/index.html">
 <meta property="og:site_name" content="kris&#39; cabin">
+<meta property="og:description" content="MySQL机器选型 Java应用系统部署机器  2核4G或者4核8G4核8G的机器根据请求处理速度，从每秒1.200到每秒7.800都可能。正常情况在4.500左右  数据库部署机器  最低配置8核16G,一般16核32G16核32G的机器每秒2.3000并发没问题 MySQL压测相关概念QPS：Query Per Second 每秒处理请求数TPS：Transaction Per Second">
 <meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://cdn.nlark.com/yuque/0/2022/png/12966419/1650773289834-f739eb4a-1b96-4830-9b2b-bb6aea2f6c93.png#clientId=ua04f6b6d-21e8-4&crop=0&crop=0&crop=1&crop=1&from=paste&height=631&id=u035355f1&margin=%5Bobject%20Object%5D&name=image.png&originHeight=631&originWidth=531&originalType=binary&ratio=1&rotation=0&showTitle=false&size=49502&status=done&style=none&taskId=u41ef970e-5f72-4bae-81de-945629a13e2&title=&width=531">
 <meta property="article:published_time" content="2022-05-02T11:02:00.000Z">
-<meta property="article:modified_time" content="2022-07-05T15:05:40.772Z">
+<meta property="article:modified_time" content="2022-07-06T08:47:36.859Z">
 <meta property="article:author" content="kris cen">
 <meta property="article:tag" content="MySQL">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://cdn.nlark.com/yuque/0/2022/png/12966419/1650773289834-f739eb4a-1b96-4830-9b2b-bb6aea2f6c93.png#clientId=ua04f6b6d-21e8-4&crop=0&crop=0&crop=1&crop=1&from=paste&height=631&id=u035355f1&margin=%5Bobject%20Object%5D&name=image.png&originHeight=631&originWidth=531&originalType=binary&ratio=1&rotation=0&showTitle=false&size=49502&status=done&style=none&taskId=u41ef970e-5f72-4bae-81de-945629a13e2&title=&width=531">
   
   
   <title>MySQL部署与扩展 - kris&#39; cabin</title>
@@ -195,7 +199,7 @@
   
     <span class="post-meta mr-2">
       <i class="iconfont icon-chart"></i>
-      0 字
+      4.9k 字
     </span>
   
 
@@ -204,7 +208,7 @@
       <i class="iconfont icon-clock-fill"></i>
       
       
-      1 分钟
+      42 分钟
     </span>
   
 
@@ -236,7 +240,204 @@
             <h1 style="display: none">MySQL部署与扩展</h1>
             
             <div class="markdown-body">
-              
+              <h1 id="MySQL机器选型"><a href="#MySQL机器选型" class="headerlink" title="MySQL机器选型"></a>MySQL机器选型</h1><ul>
+<li>Java应用系统部署机器</li>
+</ul>
+<p>2核4G或者4核8G<br>4核8G的机器根据请求处理速度，从每秒1.200到每秒7.800都可能。正常情况在4.500左右</p>
+<ul>
+<li>数据库部署机器</li>
+</ul>
+<p>最低配置8核16G,一般16核32G<br>16核32G的机器每秒2.3000并发没问题</p>
+<h1 id="MySQL压测"><a href="#MySQL压测" class="headerlink" title="MySQL压测"></a>MySQL压测</h1><h2 id="相关概念"><a href="#相关概念" class="headerlink" title="相关概念"></a>相关概念</h2><p>QPS：Query Per Second 每秒处理请求数<br>TPS：Transaction Per Second 每秒可处理的事务量</p>
+<h2 id="压测指标"><a href="#压测指标" class="headerlink" title="压测指标"></a>压测指标</h2><h3 id="IO相关指标"><a href="#IO相关指标" class="headerlink" title="IO相关指标"></a>IO相关指标</h3><ul>
+<li>IOPS</li>
+</ul>
+<p>机器的随机IO并发处理能力<br>内存中更新的脏数据库，最后由后台IO线程在不确定时间刷回磁盘。IOPS指标太低，会导致内存脏数据刷回磁盘的效率不高。<br>200 IOPS表示每秒可以执行200个随机IO读写请求</p>
+<ul>
+<li>吞吐量</li>
+</ul>
+<p>机器的磁盘存储每秒可以读写多少字节的数据量</p>
+<ul>
+<li>latency</li>
+</ul>
+<p>往磁盘写入一条数据的延迟<br>磁盘读写延迟越低，数据库性能就越高，执行每个SQL语句和事务的时候速度就越快。</p>
+<h3 id="机器指标"><a href="#机器指标" class="headerlink" title="机器指标"></a>机器指标</h3><ul>
+<li>CPU负载</li>
+<li>网络负载</li>
+</ul>
+<p>观察在压测到一定的QPS和TPS的时候，每秒机器的网卡会输入多少MB数据，输出多少MB数据</p>
+<ul>
+<li>内存负载</li>
+</ul>
+<p>观察内存使用情况</p>
+<h2 id="压测工具-sysbench"><a href="#压测工具-sysbench" class="headerlink" title="压测工具-sysbench"></a>压测工具-sysbench</h2><h3 id="压测参数"><a href="#压测参数" class="headerlink" title="压测参数"></a>压测参数</h3><ul>
+<li>–db-driver&#x3D;mysql</li>
+</ul>
+<p>基于mysql驱动去连接mysql数据库</p>
+<ul>
+<li>–time&#x3D;300</li>
+</ul>
+<p>连续访问300秒</p>
+<ul>
+<li>–threads&#x3D;10</li>
+</ul>
+<p>10个线程模拟并发访问</p>
+<ul>
+<li>–report-interval&#x3D;1</li>
+</ul>
+<p>每隔1秒输出压测情况</p>
+<ul>
+<li>–mysql-host&#x3D;127.0.0.1 –mysql-port&#x3D;3306 –mysql-user&#x3D;test_user –mysql-password&#x3D;test_user</li>
+</ul>
+<p>mysql连接参数</p>
+<ul>
+<li>–mysql-db&#x3D;test_db –tables&#x3D;20 –table_size&#x3D;1000000</li>
+</ul>
+<p>在test_db库里，构造20个测试表，每个表构造100W条测试数据</p>
+<ul>
+<li>oltp_read_write</li>
+</ul>
+<p>执行oltp数据库的读写测试</p>
+<ul>
+<li>–db-ps-mode&#x3D;disable</li>
+</ul>
+<p>禁止ps模式</p>
+<h3 id="压测命令"><a href="#压测命令" class="headerlink" title="压测命令"></a>压测命令</h3><ul>
+<li><p>构造测试表和测试数据</p>
+<blockquote>
+<p>sysbench –db-driver&#x3D;mysql –time&#x3D;300 –threads&#x3D;10 –report-interval&#x3D;1 –mysql-host&#x3D;127.0.0.1 –mysql-port&#x3D;3306 –mysql-user&#x3D;test_user –mysql-password&#x3D;test_user –mysql-db&#x3D;test_db –tables&#x3D;20 –table_size&#x3D;1000000 oltp_read_write –db-ps-mode&#x3D;disable prepare</p>
+</blockquote>
+</li>
+<li><p>测试综合读写TPS</p>
+</li>
+</ul>
+<p>使用oltp_read_write模式</p>
+<blockquote>
+<p>sysbench –db-driver&#x3D;mysql –time&#x3D;300 –threads&#x3D;10 –report-interval&#x3D;1 –mysql-host&#x3D;127.0.0.1 –mysql-port&#x3D;3306 –mysql-user&#x3D;test_user –mysql-password&#x3D;test_user –mysql-db&#x3D;test_db –tables&#x3D;20 –table_size&#x3D;1000000 oltp_read_write –db-ps-mode&#x3D;disable run</p>
+</blockquote>
+<ul>
+<li>测试只读性能</li>
+</ul>
+<p>使用oltp_read_only模式</p>
+<blockquote>
+<p>sysbench –db-driver&#x3D;mysql –time&#x3D;300 –threads&#x3D;10 –report-interval&#x3D;1 –mysql-host&#x3D;127.0.0.1 –mysql-port&#x3D;3306 –mysql-user&#x3D;test_user –mysql-password&#x3D;test_user –mysql-db&#x3D;test_db –tables&#x3D;20 –table_size&#x3D;1000000 oltp_read_only –db-ps-mode&#x3D;disable run</p>
+</blockquote>
+<ul>
+<li>测试删除性能</li>
+</ul>
+<p>使用oltp_delete模式</p>
+<blockquote>
+<p>sysbench –db-driver&#x3D;mysql –time&#x3D;300 –threads&#x3D;10 –report-interval&#x3D;1 –mysql-host&#x3D;127.0.0.1 –mysql-port&#x3D;3306 –mysql-user&#x3D;test_user –mysql-password&#x3D;test_user –mysql-db&#x3D;test_db –tables&#x3D;20 –table_size&#x3D;1000000 oltp_delete –db-ps-mode&#x3D;disable run</p>
+</blockquote>
+<ul>
+<li>测试更新索引字段性能</li>
+</ul>
+<p>使用oltp_update_index模式</p>
+<blockquote>
+<p>sysbench –db-driver&#x3D;mysql –time&#x3D;300 –threads&#x3D;10 –report-interval&#x3D;1 –mysql-host&#x3D;127.0.0.1 –mysql-port&#x3D;3306 –mysql-user&#x3D;test_user –mysql-password&#x3D;test_user –mysql-db&#x3D;test_db –tables&#x3D;20 –table_size&#x3D;1000000 oltp_update_index –db-ps-mode&#x3D;disable run</p>
+</blockquote>
+<ul>
+<li>测试更新非索引字段性能</li>
+</ul>
+<p>使用oltp_update_non_index模式</p>
+<blockquote>
+<p>sysbench –db-driver&#x3D;mysql –time&#x3D;300 –threads&#x3D;10 –report-interval&#x3D;1 –mysql-host&#x3D;127.0.0.1 –mysql-port&#x3D;3306 –mysql-user&#x3D;test_user –mysql-password&#x3D;test_user –mysql-db&#x3D;test_db –tables&#x3D;20 –table_size&#x3D;1000000 oltp_update_non_index –db-ps-mode&#x3D;disable run</p>
+</blockquote>
+<ul>
+<li>测试插入性能</li>
+</ul>
+<p>使用oltp_insert模式</p>
+<blockquote>
+<p>sysbench –db-driver&#x3D;mysql –time&#x3D;300 –threads&#x3D;10 –report-interval&#x3D;1 –mysql-host&#x3D;127.0.0.1 –mysql-port&#x3D;3306 –mysql-user&#x3D;test_user –mysql-password&#x3D;test_user –mysql-db&#x3D;test_db –tables&#x3D;20 –table_size&#x3D;1000000 oltp_insert –db-ps-mode&#x3D;disable run</p>
+</blockquote>
+<ul>
+<li>测试写入性能</li>
+</ul>
+<p>使用oltp_write_only模式</p>
+<blockquote>
+<p>sysbench –db-driver&#x3D;mysql –time&#x3D;300 –threads&#x3D;10 –report-interval&#x3D;1 –mysql-host&#x3D;127.0.0.1 –mysql-port&#x3D;3306 –mysql-user&#x3D;test_user –mysql-password&#x3D;test_user –mysql-db&#x3D;test_db –tables&#x3D;20 –table_size&#x3D;1000000 oltp_write_only –db-ps-mode&#x3D;disable run</p>
+</blockquote>
+<ul>
+<li>清除数据<blockquote>
+<p>sysbench –db-driver&#x3D;mysql –time&#x3D;300 –threads&#x3D;10 –report-interval&#x3D;1 –mysql-host&#x3D;127.0.0.1 –mysql-port&#x3D;3306 –mysql-user&#x3D;test_user –mysql-password&#x3D;test_user –mysql-db&#x3D;test_db –tables&#x3D;20 –table_size&#x3D;1000000 oltp_read_write –db-ps-mode&#x3D;disable cleanup</p>
+</blockquote>
+</li>
+</ul>
+<h3 id="压测结果分析"><a href="#压测结果分析" class="headerlink" title="压测结果分析"></a>压测结果分析</h3><blockquote>
+<p>[ 22s ] thds: 10 tps: 380.99 qps: 7312.66 (r&#x2F;w&#x2F;o: 5132.99&#x2F;1155.86&#x2F;1321.35) lat (ms, 95%): 21.33 err&#x2F;s: 0.00 reconn&#x2F;s: 0.00</p>
+</blockquote>
+<ul>
+<li>thds: 10</li>
+</ul>
+<p>10个线程在压测</p>
+<ul>
+<li>tps: 380.99</li>
+</ul>
+<p>每秒执行了380.99个事务</p>
+<ul>
+<li>qps: 7312.66</li>
+</ul>
+<p>每秒执行了7312.66个请求</p>
+<ul>
+<li>(r&#x2F;w&#x2F;o: 5132.99&#x2F;1155.86&#x2F;1321.35)</li>
+</ul>
+<p>大于qps解释<br>在每秒7312.66个请求中，有5132.99个读请求，1155.86个写请求，1321.35个其他请求</p>
+<ul>
+<li>lat (ms, 95%): 21.33</li>
+</ul>
+<p>95%的请求延迟在21.33ms以下</p>
+<ul>
+<li>err&#x2F;s: 0.00 reconn&#x2F;s: 0.00</li>
+</ul>
+<p>每秒0个请求失败，发生了0次网络重试</p>
+<h3 id="压测报告分析"><a href="#压测报告分析" class="headerlink" title="压测报告分析"></a>压测报告分析</h3><p><img src="https://cdn.nlark.com/yuque/0/2022/png/12966419/1650773289834-f739eb4a-1b96-4830-9b2b-bb6aea2f6c93.png#clientId=ua04f6b6d-21e8-4&crop=0&crop=0&crop=1&crop=1&from=paste&height=631&id=u035355f1&margin=%5Bobject%20Object%5D&name=image.png&originHeight=631&originWidth=531&originalType=binary&ratio=1&rotation=0&showTitle=false&size=49502&status=done&style=none&taskId=u41ef970e-5f72-4bae-81de-945629a13e2&title=&width=531" srcset="/img/loading.gif" lazyload alt="image.png"></p>
+<h2 id="机器性能指标"><a href="#机器性能指标" class="headerlink" title="机器性能指标"></a>机器性能指标</h2><h3 id="CPU负载"><a href="#CPU负载" class="headerlink" title="CPU负载"></a>CPU负载</h3><p>top - 15:52:00 up 42:35, 1 user, load average: 0.15, 0.05, 0.01</p>
+<ul>
+<li>15:52:00</li>
+</ul>
+<p>当前时间</p>
+<ul>
+<li>up 42:35</li>
+</ul>
+<p>机器已经运行了多久</p>
+<ul>
+<li>1 user</li>
+</ul>
+<p>一个用户在使用</p>
+<ul>
+<li>load average: 0.15, 0.05, 0.01</li>
+</ul>
+<p>CPU在1分钟、5分钟、15分钟内的负载情况</p>
+<h3 id="内存负载"><a href="#内存负载" class="headerlink" title="内存负载"></a>内存负载</h3><p>Mem: 33554432k total, 20971520k used, 12268339 free, 307200k buffers<br>总内存、已使用内存、空闲内存、OS缓冲区内存</p>
+<h3 id="磁盘IO"><a href="#磁盘IO" class="headerlink" title="磁盘IO"></a>磁盘IO</h3><p>dstat -d</p>
+<blockquote>
+<p>-dsk&#x2F;total -<br>read writ<br>103k 211k<br>0   11k</p>
+</blockquote>
+<p>存储的IO每秒读取103kb的数据，每秒写入211kb的数据<br>普通机械硬盘可以每秒上百MB读写数据量</p>
+<p>dstat -r</p>
+<blockquote>
+<p>–io&#x2F;total-<br>read writ<br>0.25 31.9<br>0   253<br>0   39.0</p>
+</blockquote>
+<p>读IOPS和写IOPS分别多少，也就是随机磁盘读取每秒多少次，随机磁盘写入每秒多少次<br>随机磁盘读写在每秒2.300次是可以承受的</p>
+<h3 id="网卡流量"><a href="#网卡流量" class="headerlink" title="网卡流量"></a>网卡流量</h3><p>dstat -n</p>
+<blockquote>
+<p>-net&#x2F;total-<br>recv send<br>16k  17k</p>
+</blockquote>
+<p>每秒网卡接收到的流量、每秒网卡发送出去的流量<br>机器如果是千兆网卡，每秒网卡总流量在100MB左右</p>
+<h1 id="数据库监控"><a href="#数据库监控" class="headerlink" title="数据库监控"></a>数据库监控</h1><h2 id="Prometheus"><a href="#Prometheus" class="headerlink" title="Prometheus"></a>Prometheus</h2><p>一个监控数据采集和存储系统，可以利用监控数据采集组件(如mysql_exporter)从指定的MySQL数据库中采集需要的监控数据。然后自己有一个时序数据库，会将采集到的监控数据放入时序数据库中。</p>
+<h2 id="Grafana"><a href="#Grafana" class="headerlink" title="Grafana"></a>Grafana</h2><p>一个可视化的监控数据展示系统，将Prometheus采集到的的数据展示层报表。</p>
+<h1 id="MySQL高可用架构"><a href="#MySQL高可用架构" class="headerlink" title="MySQL高可用架构"></a>MySQL高可用架构</h1><ul>
+<li>主从集群</li>
+<li>主从间读写分离<h2 id="原理"><a href="#原理" class="headerlink" title="原理"></a>原理</h2></li>
+</ul>
+<ol>
+<li>从库有一个io线程和主库的dump线程建立tcp连接</li>
+<li>从库io线程发送一个拉取binlog日志的请求</li>
+<li>主库的dump线程接收到请求后，根据binlog的position到主库的binlog中找到之后的数据发送给从库</li>
+<li>从库的io线程收到数据后写入到relay中</li>
+<li>从库的sql线程从relay中读取数据后重放数据到从库的数据页中</li>
+</ol>
+
             </div>
             <hr>
             <div>

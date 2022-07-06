@@ -199,7 +199,7 @@
       <p class="index-excerpt">
         <a href="/2022/05/14/%E6%BA%90%E7%A0%81/JDK/%E9%94%81%E4%BC%98%E5%8C%96/" target="_self">
           
-          
+          锁优化方案1. 标志位修改等可见性场景优先使用volatile多线程场景下，考虑清楚多线程对共享数据访问的时候的并发场景，是读多还是写多。如果仅仅只是有一些线程来写一个变量(标志位)，另一些线程读取这个标志位的值。就可以优先使用volatile 2. 数值递增的场景优先使用Atomic原子类如果共享变量仅仅是简单的数值累加或者变更数值的操作，可以使用Atomic类。 3. 数据允许多副本场景优先使
         </a>
       </p>
 
@@ -246,7 +246,7 @@
       <p class="index-excerpt">
         <a href="/2022/05/14/%E6%BA%90%E7%A0%81/JDK/ThreadLocal/" target="_self">
           
-          
+          ThreadLocal源码底层是获取每个线程自己持有的ThreadLocalMap，去获取值。 设置值1234567891011121314151617&#x2F;** * Sets the current thread&amp;#x27;s copy of this thread-local variable * to the specified value.  Most subclasses will have
         </a>
       </p>
 
@@ -293,7 +293,7 @@
       <p class="index-excerpt">
         <a href="/2022/05/14/%E6%BA%90%E7%A0%81/JDK/ReentrantReadWriteLock/" target="_self">
           
-          
+          ReentrantReadWriteLock源码加写锁排他锁 1234567891011121314151617181920212223242526272829303132333435363738394041424344454647484950protected final boolean tryAcquire(int acquires) &amp;#123;        &#x2F;*         * Wa
         </a>
       </p>
 
@@ -340,7 +340,7 @@
       <p class="index-excerpt">
         <a href="/2022/05/14/%E6%BA%90%E7%A0%81/JDK/ReentrantLock/" target="_self">
           
-          
+          AQSAbstractQueueSynchronizer 抽象队列同步器  线程1获取ReentrantLock，state改为1，当前加锁线程记录为线程1 线程2尝试获取锁，发现state不为0，就进入队列队尾，阻塞等待 线程1执行完毕，释放锁。将state改为0，当前加锁线程置空，同时唤醒队列中的阻塞等待的线程 线程2尝试获取锁重复上面步骤  ReentrantLock源码 构造函数12345
         </a>
       </p>
 
@@ -387,7 +387,7 @@
       <p class="index-excerpt">
         <a href="/2022/05/14/%E6%BA%90%E7%A0%81/JDK/Atomic%E7%B1%BB/" target="_self">
           
-          
+          Atomic执行流程 多个线程同时执行i++,i初始为0   线程A去判断此时i是否等于0，发现是，就说明没有人改动过，就执行i++，将i改为1 线程B同时去判断此时i是否等于0，发现i变为1，说明有人改动过，就重新查询，并再次去比较。  Atomic底层原理Atomic原子类核心思想：CAS(compare and set)无锁化每次尝试修改的时候，就比对一下有没有人修改过这个值，如果没有人修改
         </a>
       </p>
 
@@ -434,7 +434,7 @@
       <p class="index-excerpt">
         <a href="/2022/05/14/%E6%BA%90%E7%A0%81/JDK/synchronized/" target="_self">
           
-          
+          基础概念理解对象头Java对象（Object实例）结构包括三部分：对象头，对象体和对齐字节对象头包括三个字段  Mark Word（标记字），用于存储自身运行时的数据，例如GC标志位、哈希码、锁状态等信息。 Class Pointer（类对象指针），用于存放方法区Class对象的地址，虚拟机通过这个指针来确定这个对象是哪个类的实例。 Array Length（数组长度）。如果对象是一个Java数组
         </a>
       </p>
 
@@ -481,7 +481,7 @@
       <p class="index-excerpt">
         <a href="/2022/05/14/%E6%BA%90%E7%A0%81/JDK/volatile/" target="_self">
           
-          
+          CPU缓存模型多个线程读取主内存变量，导致性能变差，计算性能变差  总线加锁机制最开始的加锁机制，某个CPU如果要读取一个数据，会通过一个总线，对这个数据加一个锁，其他的CPU就没发去读和写这个数据，只有当这个CPU修改完之后，其他CPU可以读取到最新的数据。 这个会导致执行的串行化，多个CPU并发运行的时候，效率很差。 MESI协议(缓存一致性协议)   状态 描述    M（Modified）
         </a>
       </p>
 
@@ -528,7 +528,7 @@
       <p class="index-excerpt">
         <a href="/2022/05/14/%E6%BA%90%E7%A0%81/JDK/%E5%A4%9A%E7%BA%BF%E7%A8%8B%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/" target="_self">
           
-          
+          多线程本质多线程并发运行的时候，本质是CPU在执行各个线程的代码，一个CPU有时间片算法，在多个线程之间切换。CPU执行每个线程的时间特别短，看起来是多个线程并发在运行。因此多线程的上限也与CPU核数有关。 线程组ThreadGroup就是线程组，可以将一堆线程加入一个线程组里，将其作为一个整体进行统一的管理和设置。 在Java里，每个线程都有一个父线程的概念。比如在main线程里创建了一个线程，
         </a>
       </p>
 
@@ -575,7 +575,7 @@
       <p class="index-excerpt">
         <a href="/2022/05/14/%E6%BA%90%E7%A0%81/JDK/%E9%9B%86%E5%90%88/" target="_self">
           
-          
+          ArrayList数据结构1234567&#x2F;**    * The array buffer into which the elements of the ArrayList are stored.    * The capacity of the ArrayList is the length of this array buffer. Any    * empty ArrayList with
         </a>
       </p>
 

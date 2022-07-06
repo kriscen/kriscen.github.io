@@ -16,16 +16,22 @@
   <meta name="author" content="kris cen">
   <meta name="keywords" content="">
   
-    <meta property="og:type" content="article">
+    <meta name="description" content="单机版内核  网络通信模型 请求缓冲 命令表 持久化机制基于文件事件的网络通信模型网络通信模型   Redis Server启动的时候，有一个Socket专门用于监听建立连接的端口。Redis Client尝试与Redis Server建立连接的时候，会产生一个建立连接的请求，发生op_readable事件，然后抽象成文件事件。 收到连接请求，由事件分发器分发给连接应答处理器，与客户端进行TCP三">
+<meta property="og:type" content="article">
 <meta property="og:title" content="Redis原理">
 <meta property="og:url" content="http://example.com/2022/05/04/Redis/Redis%E5%8E%9F%E7%90%86/index.html">
 <meta property="og:site_name" content="kris&#39; cabin">
+<meta property="og:description" content="单机版内核  网络通信模型 请求缓冲 命令表 持久化机制基于文件事件的网络通信模型网络通信模型   Redis Server启动的时候，有一个Socket专门用于监听建立连接的端口。Redis Client尝试与Redis Server建立连接的时候，会产生一个建立连接的请求，发生op_readable事件，然后抽象成文件事件。 收到连接请求，由事件分发器分发给连接应答处理器，与客户端进行TCP三">
 <meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://cdn.nlark.com/yuque/0/2022/png/12966419/1651849070632-8e114bb9-5fc9-4770-bf9e-8bd13243e7de.png#clientId=uad783988-dbb9-4&crop=0&crop=0&crop=1&crop=1&from=drop&id=u33a2bc35&margin=%5Bobject%20Object%5D&name=Redis%20Server%E8%BF%90%E8%A1%8C%E5%8E%9F%E7%90%86.png&originHeight=782&originWidth=1893&originalType=binary&ratio=1&rotation=0&showTitle=false&size=132513&status=done&style=none&taskId=u8924894d-e68b-457b-9be6-2b681392efb&title=">
+<meta property="og:image" content="https://cdn.nlark.com/yuque/0/2022/png/12966419/1651905999154-43fbfa03-bd6b-4b92-aa11-f3c2bfabaa4a.png#clientId=ucf423a46-8d5a-4&crop=0&crop=0&crop=1&crop=1&from=drop&id=u8a5760b7&margin=%5Bobject%20Object%5D&name=Redis%E9%9B%86%E7%BE%A4%E5%86%85%E6%A0%B8%E5%8E%9F%E7%90%86.png&originHeight=1143&originWidth=2039&originalType=binary&ratio=1&rotation=0&showTitle=false&size=194608&status=done&style=none&taskId=u36a2645c-a336-40f4-b3d5-d598b81d915&title=">
+<meta property="og:image" content="https://cdn.nlark.com/yuque/0/2022/png/12966419/1651912273200-010d0282-27de-412f-8144-cfd93f9fe310.png#clientId=u647f0982-b218-4&crop=0&crop=0&crop=1&crop=1&from=drop&id=uc5300441&margin=%5Bobject%20Object%5D&name=Redis%E4%B8%BB%E4%BB%8E%E6%9E%B6%E6%9E%84%E5%8E%9F%E7%90%86.png&originHeight=818&originWidth=1907&originalType=binary&ratio=1&rotation=0&showTitle=false&size=138534&status=done&style=none&taskId=u9d70e5e1-001a-4ca5-96a6-cdf1ac63030&title=">
 <meta property="article:published_time" content="2022-05-04T11:03:00.000Z">
-<meta property="article:modified_time" content="2022-07-05T15:15:39.667Z">
+<meta property="article:modified_time" content="2022-07-06T09:09:10.983Z">
 <meta property="article:author" content="kris cen">
 <meta property="article:tag" content="Redis">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://cdn.nlark.com/yuque/0/2022/png/12966419/1651849070632-8e114bb9-5fc9-4770-bf9e-8bd13243e7de.png#clientId=uad783988-dbb9-4&crop=0&crop=0&crop=1&crop=1&from=drop&id=u33a2bc35&margin=%5Bobject%20Object%5D&name=Redis%20Server%E8%BF%90%E8%A1%8C%E5%8E%9F%E7%90%86.png&originHeight=782&originWidth=1893&originalType=binary&ratio=1&rotation=0&showTitle=false&size=132513&status=done&style=none&taskId=u8924894d-e68b-457b-9be6-2b681392efb&title=">
   
   
   <title>Redis原理 - kris&#39; cabin</title>
@@ -195,7 +201,7 @@
   
     <span class="post-meta mr-2">
       <i class="iconfont icon-chart"></i>
-      0 字
+      413 字
     </span>
   
 
@@ -204,7 +210,7 @@
       <i class="iconfont icon-clock-fill"></i>
       
       
-      1 分钟
+      4 分钟
     </span>
   
 
@@ -236,7 +242,33 @@
             <h1 style="display: none">Redis原理</h1>
             
             <div class="markdown-body">
-              
+              <h1 id="单机版内核"><a href="#单机版内核" class="headerlink" title="单机版内核"></a>单机版内核</h1><p><img src="https://cdn.nlark.com/yuque/0/2022/png/12966419/1651849070632-8e114bb9-5fc9-4770-bf9e-8bd13243e7de.png#clientId=uad783988-dbb9-4&crop=0&crop=0&crop=1&crop=1&from=drop&id=u33a2bc35&margin=%5Bobject%20Object%5D&name=Redis%20Server%E8%BF%90%E8%A1%8C%E5%8E%9F%E7%90%86.png&originHeight=782&originWidth=1893&originalType=binary&ratio=1&rotation=0&showTitle=false&size=132513&status=done&style=none&taskId=u8924894d-e68b-457b-9be6-2b681392efb&title=" srcset="/img/loading.gif" lazyload alt="Redis Server运行原理.png"></p>
+<ul>
+<li>网络通信模型</li>
+<li>请求缓冲</li>
+<li>命令表</li>
+<li>持久化机制<h2 id="基于文件事件的网络通信模型"><a href="#基于文件事件的网络通信模型" class="headerlink" title="基于文件事件的网络通信模型"></a>基于文件事件的网络通信模型</h2><h3 id="网络通信模型"><a href="#网络通信模型" class="headerlink" title="网络通信模型"></a>网络通信模型</h3></li>
+</ul>
+<ol>
+<li>Redis Server启动的时候，有一个Socket专门用于监听建立连接的端口。Redis Client尝试与Redis Server建立连接的时候，会产生一个建立连接的请求，发生<code>op_readable</code>事件，然后抽象成文件事件。</li>
+<li>收到连接请求，由事件分发器分发给连接应答处理器，与客户端进行<code>TCP三次握手</code>建立连接后，才算建立网络连接</li>
+</ol>
+<h3 id="为什么Redis串行化单线程模型可以抗高并发"><a href="#为什么Redis串行化单线程模型可以抗高并发" class="headerlink" title="为什么Redis串行化单线程模型可以抗高并发"></a>为什么Redis串行化单线程模型可以抗高并发</h3><p>大量的请求在短时间内建立很多连接，通过IO多路复用程序同时监听。一秒里几千个请求过来，串行化积压，redis基于存内存进行数据操作，几千个请求在1s内处理完毕。每个请求不需要去写磁盘文件，调用数据库，所以并发能力很高。</p>
+<h1 id="集群模式内核原理"><a href="#集群模式内核原理" class="headerlink" title="集群模式内核原理"></a>集群模式内核原理</h1><p><img src="https://cdn.nlark.com/yuque/0/2022/png/12966419/1651905999154-43fbfa03-bd6b-4b92-aa11-f3c2bfabaa4a.png#clientId=ucf423a46-8d5a-4&crop=0&crop=0&crop=1&crop=1&from=drop&id=u8a5760b7&margin=%5Bobject%20Object%5D&name=Redis%E9%9B%86%E7%BE%A4%E5%86%85%E6%A0%B8%E5%8E%9F%E7%90%86.png&originHeight=1143&originWidth=2039&originalType=binary&ratio=1&rotation=0&showTitle=false&size=194608&status=done&style=none&taskId=u36a2645c-a336-40f4-b3d5-d598b81d915&title=" srcset="/img/loading.gif" lazyload alt="Redis集群内核原理.png"></p>
+<ul>
+<li>组成集群，启动通信</li>
+<li>槽位分配</li>
+<li>客户端指令查找流程</li>
+<li>扩容时slot转移</li>
+</ul>
+<h1 id="主从架构原理"><a href="#主从架构原理" class="headerlink" title="主从架构原理"></a>主从架构原理</h1><p><img src="https://cdn.nlark.com/yuque/0/2022/png/12966419/1651912273200-010d0282-27de-412f-8144-cfd93f9fe310.png#clientId=u647f0982-b218-4&crop=0&crop=0&crop=1&crop=1&from=drop&id=uc5300441&margin=%5Bobject%20Object%5D&name=Redis%E4%B8%BB%E4%BB%8E%E6%9E%B6%E6%9E%84%E5%8E%9F%E7%90%86.png&originHeight=818&originWidth=1907&originalType=binary&ratio=1&rotation=0&showTitle=false&size=138534&status=done&style=none&taskId=u9d70e5e1-001a-4ca5-96a6-cdf1ac63030&title=" srcset="/img/loading.gif" lazyload alt="Redis主从架构原理.png"></p>
+<ul>
+<li>主从数据结构</li>
+<li>sync和psync</li>
+<li>故障探测和下线</li>
+<li>选举机制和故障转移</li>
+</ul>
+
             </div>
             <hr>
             <div>

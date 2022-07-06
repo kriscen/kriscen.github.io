@@ -16,16 +16,22 @@
   <meta name="author" content="kris cen">
   <meta name="keywords" content="">
   
-    <meta property="og:type" content="article">
+    <meta name="description" content="49-66 消息中间件的技术深度67-84 高阶功能85-90 优化及运维 概述关键对象  NameServer  负责管理集群里所有的Broker的信息，让使用MQ的系统可以通过他感知集群里有哪些Broker  Broker集群  多机器部署集群，并且使用主从架构实现数据多副本存储和高可用  生产者  向MQ发送消息的系统  消费者  从MQ获取消息消费的系统 NameServer NameSe">
+<meta property="og:type" content="article">
 <meta property="og:title" content="RocketMQ概述">
 <meta property="og:url" content="http://example.com/2022/05/05/RocketMQ/RocketMQ%E6%A6%82%E8%BF%B0/index.html">
 <meta property="og:site_name" content="kris&#39; cabin">
+<meta property="og:description" content="49-66 消息中间件的技术深度67-84 高阶功能85-90 优化及运维 概述关键对象  NameServer  负责管理集群里所有的Broker的信息，让使用MQ的系统可以通过他感知集群里有哪些Broker  Broker集群  多机器部署集群，并且使用主从架构实现数据多副本存储和高可用  生产者  向MQ发送消息的系统  消费者  从MQ获取消息消费的系统 NameServer NameSe">
 <meta property="og:locale" content="zh_CN">
-<meta property="article:published_time" content="2022-05-05T11:01:00.000Z">
-<meta property="article:modified_time" content="2022-07-05T15:16:35.826Z">
+<meta property="og:image" content="https://cdn.nlark.com/yuque/0/2022/png/12966419/1649682126816-637d7028-c97d-402a-9b61-476d287895f0.png#clientId=uf41c3cac-a754-4&crop=0&crop=0&crop=1&crop=1&from=paste&height=310&id=uee853c37&margin=%5Bobject%20Object%5D&name=image.png&originHeight=310&originWidth=617&originalType=binary&ratio=1&rotation=0&showTitle=false&size=60758&status=done&style=none&taskId=u3af05aac-69b8-4937-a18d-95276c64da4&title=&width=617">
+<meta property="og:image" content="https://cdn.nlark.com/yuque/0/2022/png/12966419/1649755255416-65cdadd4-967f-45bf-be2d-33193a9bc69f.png#clientId=uc84901ff-8cd4-4&crop=0&crop=0&crop=1&crop=1&from=paste&height=535&id=u874b6904&margin=%5Bobject%20Object%5D&name=image.png&originHeight=535&originWidth=560&originalType=binary&ratio=1&rotation=0&showTitle=false&size=69474&status=done&style=none&taskId=u02193b47-ee52-43eb-b090-5484f93efcd&title=&width=560">
+<meta property="og:image" content="https://cdn.nlark.com/yuque/0/2022/png/12966419/1649837516229-965c6e38-c21c-41a2-8dc2-b7156574ddff.png#clientId=u8db399c4-3bf0-4&crop=0&crop=0&crop=1&crop=1&from=paste&height=286&id=u35dbe321&margin=%5Bobject%20Object%5D&name=image.png&originHeight=286&originWidth=611&originalType=binary&ratio=1&rotation=0&showTitle=false&size=54824&status=done&style=none&taskId=u808f32f5-0d0b-4a5a-8894-5036c884de3&title=&width=611">
+<meta property="article:published_time" content="2022-05-05T11:02:00.000Z">
+<meta property="article:modified_time" content="2022-07-06T09:17:51.192Z">
 <meta property="article:author" content="kris cen">
 <meta property="article:tag" content="RocketMQ">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://cdn.nlark.com/yuque/0/2022/png/12966419/1649682126816-637d7028-c97d-402a-9b61-476d287895f0.png#clientId=uf41c3cac-a754-4&crop=0&crop=0&crop=1&crop=1&from=paste&height=310&id=uee853c37&margin=%5Bobject%20Object%5D&name=image.png&originHeight=310&originWidth=617&originalType=binary&ratio=1&rotation=0&showTitle=false&size=60758&status=done&style=none&taskId=u3af05aac-69b8-4937-a18d-95276c64da4&title=&width=617">
   
   
   <title>RocketMQ概述 - kris&#39; cabin</title>
@@ -184,7 +190,7 @@
   
     <span class="post-meta">
       <i class="iconfont icon-date-fill" aria-hidden="true"></i>
-      <time datetime="2022-05-05 19:01" pubdate>
+      <time datetime="2022-05-05 19:02" pubdate>
         2022年5月5日 晚上
       </time>
     </span>
@@ -195,7 +201,7 @@
   
     <span class="post-meta mr-2">
       <i class="iconfont icon-chart"></i>
-      0 字
+      8k 字
     </span>
   
 
@@ -204,7 +210,7 @@
       <i class="iconfont icon-clock-fill"></i>
       
       
-      1 分钟
+      67 分钟
     </span>
   
 
@@ -236,7 +242,247 @@
             <h1 style="display: none">RocketMQ概述</h1>
             
             <div class="markdown-body">
-              
+              <p>49-66 消息中间件的技术深度<br>67-84 高阶功能<br>85-90 优化及运维</p>
+<h1 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h1><h2 id="关键对象"><a href="#关键对象" class="headerlink" title="关键对象"></a>关键对象</h2><p><img src="https://cdn.nlark.com/yuque/0/2022/png/12966419/1649682126816-637d7028-c97d-402a-9b61-476d287895f0.png#clientId=uf41c3cac-a754-4&crop=0&crop=0&crop=1&crop=1&from=paste&height=310&id=uee853c37&margin=%5Bobject%20Object%5D&name=image.png&originHeight=310&originWidth=617&originalType=binary&ratio=1&rotation=0&showTitle=false&size=60758&status=done&style=none&taskId=u3af05aac-69b8-4937-a18d-95276c64da4&title=&width=617" srcset="/img/loading.gif" lazyload alt="image.png"></p>
+<ul>
+<li>NameServer</li>
+</ul>
+<p>负责管理集群里所有的Broker的信息，让使用MQ的系统可以通过他感知集群里有哪些Broker</p>
+<ul>
+<li>Broker集群</li>
+</ul>
+<p>多机器部署集群，并且使用主从架构实现数据多副本存储和高可用</p>
+<ul>
+<li>生产者</li>
+</ul>
+<p>向MQ发送消息的系统</p>
+<ul>
+<li>消费者</li>
+</ul>
+<p>从MQ获取消息消费的系统</p>
+<h3 id="NameServer"><a href="#NameServer" class="headerlink" title="NameServer"></a>NameServer</h3><ol>
+<li><p>NameServer会多机器部署，实现一个集群。保证任何一个机器宕机，其他机器上的NameServer可以继续对外提供服务。</p>
+</li>
+<li><p>每个Broker启动都会向所有的NameServer进行注册，也就是每个NameServer都有一份急群众所有Broker的信息</p>
+</li>
+<li><p>RocketMQ的生产者和消费者自己主动去NameServer拉取Broker信息</p>
+</li>
+<li><p>Broker和NameServer通过心跳机制感知Broker是否宕机</p>
+<h3 id="Broker"><a href="#Broker" class="headerlink" title="Broker"></a>Broker</h3></li>
+<li><p>RocketMQ的Master-Slave模式采用Salve Broker不停的发送请求到Master Broker去拉取消息。即RocketMQ自身的Mater-Salve模式采取的是Pull模式拉取消息。</p>
+</li>
+<li><p>在写入消息的时候，通常选择Master Broker去写入。但是在拉取消息的时候，可能从Master Broker获取，也有可能从Salve Broker获取，需要根据当时机器的负载情况，Master Broker会给出建议。</p>
+</li>
+<li><p>Salve Broker挂了，影响并不大，读写请求都走Master Broker，但是会导致Master Broker压力变大</p>
+</li>
+<li><p>Master Broker挂了，可以从Salve Broker走数据，但是可能存在部分数据没有同步完成。并且Salve无法自动切换为Master Broker，需要进行运维操作。Master-Salve模式不是彻底的高可用模式，没法实现自动把Salve切换为Master。</p>
+</li>
+<li><p>4.5版本之后，引入了Dledger模式。一个Master Broker可以对应多个Salve Broker。当Master Broker挂掉的时候，通过Dledger技术和Raft协议进行leader选举，直接将一个Salve Broker选举为新的Master Broker。</p>
+<h3 id="Topic"><a href="#Topic" class="headerlink" title="Topic"></a>Topic</h3><p>一个Topic就是一个数据集合，不同类型的数据放入不同的Topic中。</p>
+<h3 id="MessageQueue"><a href="#MessageQueue" class="headerlink" title="MessageQueue"></a>MessageQueue</h3><p>在创建Topic的时候需要指定MessageQueue<br><img src="https://cdn.nlark.com/yuque/0/2022/png/12966419/1649755255416-65cdadd4-967f-45bf-be2d-33193a9bc69f.png#clientId=uc84901ff-8cd4-4&crop=0&crop=0&crop=1&crop=1&from=paste&height=535&id=u874b6904&margin=%5Bobject%20Object%5D&name=image.png&originHeight=535&originWidth=560&originalType=binary&ratio=1&rotation=0&showTitle=false&size=69474&status=done&style=none&taskId=u02193b47-ee52-43eb-b090-5484f93efcd&title=&width=560" srcset="/img/loading.gif" lazyload alt="image.png"><br>MessageQueue就是一个数据分片机制，通过MessageQueue将一个Topic的数据拆分为很多数据分片，然后每个Broker机器上存储一些MessageQueue，通过这个方式实现Topic数据的分布式存储。</p>
+</li>
+</ol>
+<p>如果某个Broker挂掉了，会导致在一段时间内，每次访问挂掉的Master Broker的时候，会导致访问失败。<br>因此需要开启Producer的开关sendLatencyFaultEnable。会开启一个容错机制，某次访问一个Broker发现网络延迟500ms还无法访问，就会自动回避访问这个Broker一段时间。</p>
+<h3 id="CommitLog"><a href="#CommitLog" class="headerlink" title="CommitLog"></a>CommitLog</h3><p>当生产者的消息发送到Broker上的时候，Broker会将消息直接写入磁盘的一个日志文件，叫CommitLog。<br>CommitLog是很多磁盘文件，每个文件限定最多1GB，Broker收到消息之后，会直接追加写入文件末尾。如果一个CommitLog满了1GB，会创建一个新的CommitLog文件。</p>
+<h3 id="消费组"><a href="#消费组" class="headerlink" title="消费组"></a>消费组</h3><p>消费组就是一组消费者。<br>假如有一个Topic叫TopicA，然后存在系统A和系统B需要消费这个Topic的数据。<br>那么系统A和系统B就会分别起一个消费组的名字。</p>
+<h2 id="消息类型"><a href="#消息类型" class="headerlink" title="消息类型"></a>消息类型</h2><h3 id="发送消息类型"><a href="#发送消息类型" class="headerlink" title="发送消息类型"></a>发送消息类型</h3><ul>
+<li>同步消息</li>
+</ul>
+<p>消息发送到MQ之后，会等待消息返回结果</p>
+<ul>
+<li>异步消息</li>
+</ul>
+<p>消息发送后，会继续往下走。当返回消息的时候，会执行回调方法</p>
+<ul>
+<li>单向消息</li>
+</ul>
+<p>消息发送后，不会关注MQ是否返回结果</p>
+<h3 id="消费消息类型"><a href="#消费消息类型" class="headerlink" title="消费消息类型"></a>消费消息类型</h3><ul>
+<li>Push消费模式</li>
+</ul>
+<p>Broker主动把消息发送给你的消费者，你的消费者是被动的接收Broker推送的消息进行处理。<br>Push消费模式的底层也是基于消费者主动拉取的模式实现，只是Broker会尽可能实时的将新消息交给消费者机器进行处理，他的消息时效性更好。<br>**请求挂起和长轮询	**<br>当消费者请求发送到Broker，结果发现没有新的消息，就会让请求线程挂起，默认15s。然后期间会有后台线程每隔一会就检查一下是否有新的消息给你。如果在这个挂起的过程中，如果有新的消息到达了，会主动唤醒挂起的线程。</p>
+<ul>
+<li>Pull消费模式</li>
+</ul>
+<p>Broker不会主动推送消息给Consumer，而是消费者主动请求到Broker拉取消息</p>
+<h2 id="流程"><a href="#流程" class="headerlink" title="流程"></a>流程</h2><h3 id="生产者发送消息"><a href="#生产者发送消息" class="headerlink" title="生产者发送消息"></a>生产者发送消息</h3><h3 id="Broker持久化消息"><a href="#Broker持久化消息" class="headerlink" title="Broker持久化消息"></a>Broker持久化消息</h3><p>当Broker收到消息的时候，会吧这个消息直接写入CommitLog。<br>Broker对Topic下的每个MessageQueue都有一些系列的ConsumerQueue文件。即在Broker磁盘上存在固定格式的一系列文件：$HOME&#x2F;store&#x2F;consumerqueue&#x2F;{topic}&#x2F;{queueId}&#x2F;{fileName}<br>目录的含义为：对存储在这台Broker机器上的Topic下的一个MessageQueue，有很多ConsumerQueue文件，这个consumerQueue文件里存储的是一条消息对应在CommitLog中offset的偏移量。<br>ConsumerQueue中存储的每条数据不只是消息在CommitLog中offset的偏移量，还包含了消息的长度以及tag hashcode。一条数据20个字节，每个ConsumerQueue文件保存30万条数据，大概每个文件时5.72MB。</p>
+<p>Broker是基于操作系统的PageCache和顺序写两个机制来提升CommitLog文件的性能。<br>首先，Broker以顺序写的方式将消息写入CommitLog磁盘文件，也就是每次写入就在文件末尾追加一条数据，对文件进行顺序写的性能要比文件随机写的性能提升很多。<br>其次，数据写入CommitLog文件的时候，并不是直接写入底层的物理磁盘文件，而是先进入OS的PageCache内存缓存中，然后后续由OS的后台线程选一个时间，异步化将OS PageCache内存缓冲中的数据刷入底层的磁盘文件。<br>总结的策略为：磁盘文件顺序写+OS PageCache写入+OS 异步刷盘的策略</p>
+<p>刷盘机制</p>
+<ul>
+<li>异步刷盘</li>
+</ul>
+<p>异步刷盘需要通过后台线程将PageCache刷入磁盘，消息吞吐量非常高，但是可能会数据丢失。</p>
+<ul>
+<li>同步刷盘</li>
+</ul>
+<p>每次消息会强制刷入磁盘再返回ack给producer。如果broker还没有来得及把数据同步刷入磁盘，然后他自己挂了，那么此时对producer来说会感知到消息发送失败了，然后你只要不停的重试发送就可以了，直到有slave broker切换成master broker重新让你可以写入消息，此时可以保证数据是不会丢的。<br>但是这样会导致写入性能急剧下降，消息的吞吐量急剧下降。</p>
+<h3 id="基于DLedger技术的Broker主从同步原理"><a href="#基于DLedger技术的Broker主从同步原理" class="headerlink" title="基于DLedger技术的Broker主从同步原理"></a>基于DLedger技术的Broker主从同步原理</h3><blockquote>
+<p>Broker实现高可用，就需要一个Broker组。Leader Broker可以写入数据，然后在接收数据后，直接把数据同步给其他Follow Broker。这样一个条数据在Broker组里都存在副本，如果Leader Broker宕机，可以直接让其他的Follower Broker自动切换为新的Leader Broker。</p>
+</blockquote>
+<ol>
+<li>DLedger首先自身有一个CommitLog机制，接收数据后，会自己写入到CommitLog磁盘文件中。如果基于DLedger实现高可用架构，实际上就是用DLedger的CommitLog替换Broker的CommitLog。</li>
+<li>DLedger基于Raft协议进行Leader Broker选举。<ol>
+<li>确保有人可以成为Leader的核心机制就是一轮选举不出来Leader的话，就让大家随机休眠</li>
+<li>先苏醒的人会投票给自己</li>
+<li>然后其他人苏醒发现自己受到选票就会直接投票给那个人。依靠这个随机休眠机制</li>
+<li>基本上几轮投票后可以快速选举一个Leader。</li>
+</ol>
+</li>
+<li>DLedger在进行同步的时候采用Raft协议进行多副本同步。数据同步会分为两个阶段，一个是uncommitted阶段，一个是commited阶段</li>
+<li>Leader Broker的DLedger收到一条数据只会，会标记为uncommitted状态。</li>
+<li>然后通过DledgerServer组件把这个uncommitted数据发送给Follower Broker的DLedgerServer</li>
+<li>Follower Broker的DLedgerServer收到uncommitted消息之后，必须返回一个ack给Leader Broker的DLedgerServer</li>
+<li>如果Leader Broker收到超过半数的Follower Broker返回的ack之后，会将消息标记为commited状态</li>
+<li>然后Leader Broker的DLedgerServer就会发送commited消息给Follower broker机器的DLedgerServer，让他们也吧消息标记为commited状态</li>
+<li>如果Leader Broker挂了，剩下的两个Follower Broker会重新发起选举。选举完之后，会对没有完成的数据同步进行一些恢复性操作，保证数据不会丢。</li>
+</ol>
+<h3 id="消费者获取消息处理"><a href="#消费者获取消息处理" class="headerlink" title="消费者获取消息处理"></a>消费者获取消息处理</h3><p>不同的系统应该设置不同的消费组，如果不同的消费组订阅了同一个Topic，对Topic里的一条消息，每个消费组都会获取到这个消息。</p>
+<p>对于消费组内部，存在两种模式</p>
+<ul>
+<li>集群模式</li>
+</ul>
+<p>默认情况是集群模式。一个消费组获取到了一条消息，只会交给组内的一台机器去处理，而不是每个机器都可以回去。</p>
+<ul>
+<li>广播模式</li>
+</ul>
+<p>消费组回去到了一条消息，组内的每台机器都可以回去到这条消息。<br>广播模式其实用的比较少。</p>
+<p><strong>消费者与MessageQueue的关系</strong><br>大致认为一个Topic的多个MessageQueue会均匀分摊给消费组内的多个机器去消费。这里的一个原则就是，一个MessageQueue只能被一个消费机器去处理，但是一个消费机器可以负责多个MessageQueue。</p>
+<ol>
+<li>消费者机器发送拉取请求到Broker，告诉Broker拉取哪个MessageQueue中的消息<ol>
+<li>如果之前没有拉取过消息，就从MessageQueue第一条消息拉取</li>
+</ol>
+</li>
+<li>Broker会找到MessageQueue对应的ConsumerQueue，从里面找到第一条消息的offset</li>
+<li>Broker根据找到的地址，去CommitLog根据offset读取这个消息的数据返回给消费者机器</li>
+<li>消费者获取消息后，进行注册函数的回调</li>
+<li>消费者处理完消息后，消费者机器会提交一个目前的消费进度到Broker上</li>
+<li>Broker会存储消费进度。</li>
+</ol>
+<p>如果消费组中出现机器宕机或者机器扩容的情况，就会进入rabalance环节。重新给各个消费机器分配他们要处理的MessageQueue。</p>
+<h3 id="消费者拉取消息策略"><a href="#消费者拉取消息策略" class="headerlink" title="消费者拉取消息策略"></a>消费者拉取消息策略</h3><ol>
+<li>进行消息拉取的时候先读os cache里少量的ConsumerQueue的数据</li>
+<li>根据读取到的offset去CommitLog里读取消息的完整数据<ol>
+<li>如果读取的是刚刚写入CommitLog的数据，他们很大概率还停留在os cache中，此时可以直接从中读取到数据。由于是内存读，性能很高</li>
+<li>如果读取的是较早之前的数据，可能已经被刷入磁盘了。那么只能从磁盘上读取。</li>
+</ol>
+</li>
+</ol>
+<p>如果消费速度跟得上生产速度没有产生消息堆积，每次获取就都是从os cache获取，效率很高。但是如果消息堆积，消费的很慢，相当于每次都是从磁盘读取之前的消息，新消息一直堆积，然后罗盘，效率就很低。</p>
+<p><strong>从Salve Broker拉取消息的时机</strong><br>Master Broker会对比消费机器当前没有拉取的消息的数量和大小，以及最多可以存放在os cache内存里面的消息的大小。如果没有拉取的消息超过了最大能使用的内存的量。那么说明后序大概率会频繁的从磁盘加载数据，此时就会让消费机器下次从Salve Broker加载数据。</p>
+<h3 id="RocketMQ基于Netty的扩展"><a href="#RocketMQ基于Netty的扩展" class="headerlink" title="RocketMQ基于Netty的扩展"></a>RocketMQ基于Netty的扩展</h3><ul>
+<li>Reactor主线程在端口上监听Producer建立连接的请求，建立长连接</li>
+<li>Reactor线程池并发的监听多个连接的请求是否到达</li>
+<li>Worker请求并发的对多个请求进行预处理</li>
+<li>业务线程池并发的对多个请求进行磁盘读写业务操作</li>
+</ul>
+<p><img src="https://cdn.nlark.com/yuque/0/2022/png/12966419/1649837516229-965c6e38-c21c-41a2-8dc2-b7156574ddff.png#clientId=u8db399c4-3bf0-4&crop=0&crop=0&crop=1&crop=1&from=paste&height=286&id=u35dbe321&margin=%5Bobject%20Object%5D&name=image.png&originHeight=286&originWidth=611&originalType=binary&ratio=1&rotation=0&showTitle=false&size=54824&status=done&style=none&taskId=u808f32f5-0d0b-4a5a-8894-5036c884de3&title=&width=611" srcset="/img/loading.gif" lazyload alt="image.png"></p>
+<h3 id="RocketMQ基于mmap读写磁盘文件"><a href="#RocketMQ基于mmap读写磁盘文件" class="headerlink" title="RocketMQ基于mmap读写磁盘文件"></a>RocketMQ基于mmap读写磁盘文件</h3><h1 id="深入RocketMQ"><a href="#深入RocketMQ" class="headerlink" title="深入RocketMQ"></a>深入RocketMQ</h1><h2 id="MQ消息丢失"><a href="#MQ消息丢失" class="headerlink" title="MQ消息丢失"></a>MQ消息丢失</h2><h3 id="消息可能丢失的环节"><a href="#消息可能丢失的环节" class="headerlink" title="消息可能丢失的环节"></a>消息可能丢失的环节</h3><ul>
+<li>生产者推送消息到RocketMQ的时候消息丢失<ul>
+<li>网络波动</li>
+<li>Leader Broker故障，其他Follower Broker正在尝试切换为leader的过程</li>
+</ul>
+</li>
+<li>消息到达后，RocketMQ自身丢失<ul>
+<li>还未进行os cache刷盘的时候，机器故障</li>
+<li>刷盘后，磁盘物理损坏</li>
+</ul>
+</li>
+<li>消费系统得到消息<ul>
+<li>当mq消费者是自动提交已消费的offset时，消费者接收到了消息，但是出现了后续步骤异常，但是RocketMQ已经标记为commited</li>
+</ul>
+</li>
+</ul>
+<h3 id="生产者消息零丢失方案"><a href="#生产者消息零丢失方案" class="headerlink" title="生产者消息零丢失方案"></a>生产者消息零丢失方案</h3><ul>
+<li>同步发送消息+重试机制</li>
+<li>通过RocketMQ的事务消息的功能(建议)</li>
+</ul>
+<p>RocketMQ的事务消息</p>
+<ol>
+<li>首先消费者发送一条half消息到MQ，half消息本质上就是mq消息，只是消息的状态是half。此时的消费者看不到half消息</li>
+<li>生产者等待这个half消息的写入成功的响应通知<ol>
+<li>half消息写入失败，生产者侧应该进行业务回滚</li>
+<li>half消息写入成功，生产者就完成了自己任务。<ol>
+<li>如果生产者后续异常，想要消息回滚。就重新对RocketMQ发送一个rollback请求。RocketMQ会将half消息删除</li>
+<li>如果生产者本地事务提交，就可以发送一个commit请求给MQ，让MQ对之前的half消息进行commit操作。消费者就可以看到这个消息了。</li>
+</ol>
+</li>
+<li>发送half消息成功，但是没有收到响应。RocketMQ会有一个补偿流程：自己去扫描处于half状态的消息，如果超过了一定时间没有对消息执行commit&#x2F;rollback操作，会回调生产者的接口。</li>
+<li>如果rollback或者commit发送失败，由于RocketMQ的消息是half状态，后面会继续回调接口。</li>
+</ol>
+</li>
+</ol>
+<p>half消息原理</p>
+<ol>
+<li>生产者发送消息到Broker，Broker会定位到Topic的一个MessageQueue，然后定位到一台机器上去。</li>
+<li>准备写入CommitLog，以及对应的ComsumerQueue。此时发现是half消息，就不写入ComsumerQueue，而是写入内部的<code>RMQ_SYS_TRANS_HALF_TOPIC</code></li>
+<li>如果写入消息成功了，就会返回给生产者说成功了</li>
+<li>如果发生异常，没有执行rollback或者commit，此时会有后台线程定时扫描<code>RMQ_SYS_TRANS_HALF_TOPIC</code>中的half消息，如果超过一定时间就会回调生产者接口。如果一直没有执行commit&#x2F;rollback，最多15次回调，超过之后会自动标记消息为rollback。</li>
+<li>如果执行rollback操作，本质是用一个OP操作标记half消息的状态。内部会生成一个rollback OP记录到<code>OP_TOPIC</code>中，来标记half是rollback了。</li>
+<li>如果执行commit操作，就会在<code>OP_TOPIC</code>中写入一条记录，标记half消息已经是commit状态。然后需要将<code>RMQ_SYS_TRANS_HALF_TOPIC</code>中的half消息写入原本Topic对应的ConsumerQueue中。消费者就可以正常看到消息<h3 id="Broker消息零丢失方案"><a href="#Broker消息零丢失方案" class="headerlink" title="Broker消息零丢失方案"></a>Broker消息零丢失方案</h3>同步刷盘+Raft协议主从同步</li>
+</ol>
+<p>broker配置文件：flushDiskType</p>
+<ul>
+<li>SYNC_FLUSH 同步刷盘</li>
+<li>ASYNC_FLUSH 异步刷盘，默认</li>
+</ul>
+<p>主从架构模式：、<br>必须让一个Master Broker有一个Slave Broker去同步他的数据，而且一条消息写入成功，必须让Salve Broker也写入成功，保证数据有多个副本的冗余</p>
+<h3 id="Consumer消息零丢失方案"><a href="#Consumer消息零丢失方案" class="headerlink" title="Consumer消息零丢失方案"></a>Consumer消息零丢失方案</h3><p>手动提交offset+自动故障转移</p>
+<p>注意：不能异步消费信息。</p>
+<h3 id="消息零丢失方案的利弊"><a href="#消息零丢失方案的利弊" class="headerlink" title="消息零丢失方案的利弊"></a>消息零丢失方案的利弊</h3><p>劣势：整个消息流转链路的性能大幅度下降，让MQ的吞吐量大幅下降</p>
+<p>适用场景：仅针对金钱，核心数据相关的链路使用</p>
+<h2 id="MQ消息重复消费"><a href="#MQ消息重复消费" class="headerlink" title="MQ消息重复消费"></a>MQ消息重复消费</h2><h3 id="消息重复环节"><a href="#消息重复环节" class="headerlink" title="消息重复环节"></a>消息重复环节</h3><ul>
+<li>生产者重复推送消息<ul>
+<li>系统调用</li>
+<li>网络延时</li>
+<li>自身业务重试机制</li>
+</ul>
+</li>
+<li>消费者重复消费<ul>
+<li>重启，宕机等情况</li>
+</ul>
+</li>
+</ul>
+<h3 id="幂等性机制"><a href="#幂等性机制" class="headerlink" title="幂等性机制"></a>幂等性机制</h3><p>一个接口重复调用多次，自己本身的系统数据是正常的，不会多出来一些重复的数据。</p>
+<ul>
+<li>业务判断</li>
+</ul>
+<p>当系统接口被重试调用的时候，最开始应该发送消息到MQ去查询一遍业务消息是否在MQ中存在。</p>
+<ul>
+<li>Reids缓存的幂等性机制</li>
+</ul>
+<p>将业务id存一份在redis，重复调用的时候查询一遍。</p>
+<h2 id="MQ消息处理失败"><a href="#MQ消息处理失败" class="headerlink" title="MQ消息处理失败"></a>MQ消息处理失败</h2><h3 id="死信队列"><a href="#死信队列" class="headerlink" title="死信队列"></a>死信队列</h3><p>当消费异常的时候，返回RECONSUME_LATER，RocketMQ会进行重试。RocketMQ会将这批消息放入这个消费组的重试队列中。比如你的消费组的名称是<code>VoucherConsumerGroup</code>，意思是优惠券系统的消费组，那么他会有一个<code>%RETRY%VoucherConsumerGroup</code>这个名字的重试队列。<br>默认最多重试16次，每次重试之间的间隔时间不一样。<br>如果超过重试次数依旧失败，这批消息会进入死信队列，名称为<code>%DLQ%VoucherConsumerGroup</code></p>
+<h3 id="死信队列消费"><a href="#死信队列消费" class="headerlink" title="死信队列消费"></a>死信队列消费</h3><p>需要另外起一个后台线程，订阅<code>%DLQ%VoucherConsumerGroup</code>这个死信队列。对死信队列中的消息一直重试。</p>
+<h2 id="MQ消息乱序"><a href="#MQ消息乱序" class="headerlink" title="MQ消息乱序"></a>MQ消息乱序</h2><p>原本有序的消息，可能会分到不同的MessageQueue中，不同机器上部署的consumer可能会用混乱的顺序从不同的MessageQueue连获取消息然后处理。</p>
+<p>解决方案</p>
+<ol>
+<li>让同一个订单发送消息的时候选择同一个MessageQueue</li>
+<li>消费者获取消息处理的时候，也需要有序获取</li>
+<li>出现异常只能返回<code>SUSPEND_CURRENT_QUEUE_A_MOMENT</code>，会让这批消息等一会处理，而不是放入重试队列直接处理下一批消息</li>
+</ol>
+<h2 id="MQ消息过滤"><a href="#MQ消息过滤" class="headerlink" title="MQ消息过滤"></a>MQ消息过滤</h2><p>RocketMQ的数据过滤机制。</p>
+<ol>
+<li>在发送消息的时候，可以给消息设置tag和属性</li>
+<li>在消费数据的时候根据tag和属性进行过滤</li>
+</ol>
+<h2 id="MQ延迟队列"><a href="#MQ延迟队列" class="headerlink" title="MQ延迟队列"></a>MQ延迟队列</h2><p>延迟消息<br>生产者发送一条消息到MQ里面后，可以指定这条消息是延迟消息，指定一个时间，然后消费者才可以扫描到。</p>
+<h1 id="MQ运维"><a href="#MQ运维" class="headerlink" title="MQ运维"></a>MQ运维</h1><h2 id="权限机制"><a href="#权限机制" class="headerlink" title="权限机制"></a>权限机制</h2><p>自带功能</p>
+<h2 id="消息轨迹跟踪"><a href="#消息轨迹跟踪" class="headerlink" title="消息轨迹跟踪"></a>消息轨迹跟踪</h2><p>自带功能</p>
+<h2 id="消息堆积"><a href="#消息堆积" class="headerlink" title="消息堆积"></a>消息堆积</h2><ol>
+<li>先定位到消费者的问题,快速恢复 2.怎么去解决堆积消费问题 </li>
+<li>消息可丢失直接部署消费者丢弃消息 </li>
+<li>消息不能丢失,消息topic对应的messagequeue较多消费者consumer较少每个消费者消费多个messagequeue,此时可以consumer加机器来加快消费 </li>
+<li>消息不能丢失,topic指定的messagequeue过小,此时可新建一个topic调大messagequeue的数量,临时部署服务来消费堆积的topic</li>
+</ol>
+<h2 id="集群挂掉的情况保证高可用"><a href="#集群挂掉的情况保证高可用" class="headerlink" title="集群挂掉的情况保证高可用"></a>集群挂掉的情况保证高可用</h2><p>需要自己进行消息持久化</p>
+<h2 id="MQ限流"><a href="#MQ限流" class="headerlink" title="MQ限流"></a>MQ限流</h2><p>桶令牌算法</p>
+<h2 id="从Kafka迁移到RocketMQ"><a href="#从Kafka迁移到RocketMQ" class="headerlink" title="从Kafka迁移到RocketMQ"></a>从Kafka迁移到RocketMQ</h2><ol>
+<li>双写机制。先再所有的Producer系统中引入双写代码，同时往Kafka和RocketMQ中写入消息。然后需要经过一段时间，大概一周左右。</li>
+<li>双读机制。所有的Consumer系统都需要同时从Kafka和RocketMQ读取消息，用一模一样的逻辑消费。只是在RocketMQ落库改变数据等操作的时候，不执行具体操作。</li>
+<li>在Consumer侧两种队列消费的时候，进行消费统计，同时对RocketMQ读取到的消息处理之后的结果写入一个临时存储中。然后进行实际比对。</li>
+<li>比对一致后，正式切换。停机Producer系统，然后修改重新上线，修改为仅写入RocketMQ。然后将Consumer系统下线，修改基于RocketMQ消费、计算。</li>
+</ol>
+
             </div>
             <hr>
             <div>
@@ -280,8 +526,8 @@
                   <article class="post-next col-6">
                     
                     
-                      <a href="/2022/05/04/Redis/Redis%E6%96%B9%E6%A1%88/">
-                        <span class="hidden-mobile">Redis方案</span>
+                      <a href="/2022/05/05/RocketMQ/RocketMQ%E8%83%8C%E6%99%AF%E6%A6%82%E8%BF%B0/">
+                        <span class="hidden-mobile">RocketMQ源码</span>
                         <span class="visible-mobile">下一篇</span>
                         <i class="iconfont icon-arrowright"></i>
                       </a>

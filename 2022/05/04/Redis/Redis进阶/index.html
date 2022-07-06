@@ -16,13 +16,15 @@
   <meta name="author" content="kris cen">
   <meta name="keywords" content="">
   
-    <meta property="og:type" content="article">
+    <meta name="description" content="reids单机-&gt;一主多从(主从架构)-&gt;redis cluster(多master + 读写分离 + 高可用)redis自带压测工具redis-benchmark 持久化机制单机redis的持久化机制 持久化机制概述如果我们想要redis仅仅作为纯内存的缓存来用，那么可以禁止RDB和AOF所有的持久化机制通过RDB或AOF，都可以将redis内存中的数据给持久化到磁盘上面来，然后可以">
+<meta property="og:type" content="article">
 <meta property="og:title" content="Redis进阶">
 <meta property="og:url" content="http://example.com/2022/05/04/Redis/Redis%E8%BF%9B%E9%98%B6/index.html">
 <meta property="og:site_name" content="kris&#39; cabin">
+<meta property="og:description" content="reids单机-&gt;一主多从(主从架构)-&gt;redis cluster(多master + 读写分离 + 高可用)redis自带压测工具redis-benchmark 持久化机制单机redis的持久化机制 持久化机制概述如果我们想要redis仅仅作为纯内存的缓存来用，那么可以禁止RDB和AOF所有的持久化机制通过RDB或AOF，都可以将redis内存中的数据给持久化到磁盘上面来，然后可以">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2022-05-04T11:02:00.000Z">
-<meta property="article:modified_time" content="2022-07-05T15:15:39.750Z">
+<meta property="article:modified_time" content="2022-07-06T09:08:47.581Z">
 <meta property="article:author" content="kris cen">
 <meta property="article:tag" content="Redis">
 <meta name="twitter:card" content="summary_large_image">
@@ -195,7 +197,7 @@
   
     <span class="post-meta mr-2">
       <i class="iconfont icon-chart"></i>
-      0 字
+      18k 字
     </span>
   
 
@@ -204,7 +206,7 @@
       <i class="iconfont icon-clock-fill"></i>
       
       
-      1 分钟
+      153 分钟
     </span>
   
 
@@ -236,7 +238,347 @@
             <h1 style="display: none">Redis进阶</h1>
             
             <div class="markdown-body">
-              
+              <p>reids单机-&gt;一主多从(主从架构)-&gt;redis cluster(多master + 读写分离 + 高可用)<br>redis自带压测工具<code>redis-benchmark</code></p>
+<h1 id="持久化机制"><a href="#持久化机制" class="headerlink" title="持久化机制"></a>持久化机制</h1><p>单机redis的持久化机制</p>
+<h2 id="持久化机制概述"><a href="#持久化机制概述" class="headerlink" title="持久化机制概述"></a>持久化机制概述</h2><p>如果我们想要redis仅仅作为纯内存的缓存来用，那么可以禁止RDB和AOF所有的持久化机制<br>通过RDB或AOF，都可以将redis内存中的数据给持久化到磁盘上面来，然后可以将这些数据备份到别的地方去，比如说阿里云，云服务<br>如果redis挂了，服务器上的内存和磁盘上的数据都丢了，可以从云服务上拷贝回来之前的数据，放到指定的目录中，然后重新启动redis，redis就会自动根据持久化数据文件中的数据，去恢复内存中的数据，继续对外提供服务<br>如果同时使用RDB和AOF两种持久化机制，那么在redis重启的时候，会使用AOF来重新构建数据，因为AOF中的数据更加完整</p>
+<h3 id="RDB"><a href="#RDB" class="headerlink" title="RDB"></a>RDB</h3><p>RDB持久化机制，对redis中的数据执行周期性的持久化</p>
+<p>优点</p>
+<ol>
+<li>RDB会生成多个数据文件，每个数据文件都代表了某一个时刻中redis的数据，这种多个数据文件的方式，非常适合做冷备，可以将这种完整的数据文件发送到一些远程的安全存储上去，比如说Amazon的S3云服务上去，在国内可以是阿里云的ODPS分布式存储上，以预定好的备份策略来定期备份redis中的数据</li>
+<li>RDB对redis对外提供的读写服务，影响非常小，可以让redis保持高性能，因为redis主进程只需要fork一个子进程，让子进程执行磁盘IO操作来进行RDB持久化即可</li>
+<li>相对于AOF持久化机制来说，直接基于RDB数据文件来重启和恢复redis进程，更加快速</li>
+</ol>
+<p>缺点</p>
+<ol>
+<li>如果想要在redis故障时，尽可能少的丢失数据，那么RDB没有AOF好。一般来说，RDB数据快照文件，都是每隔5分钟，或者更长时间生成一次，这个时候就得接受一旦redis进程宕机，那么会丢失最近5分钟的数</li>
+<li>RDB每次在fork子进程来执行RDB快照数据文件生成的时候，如果数据文件特别大，可能会导致对客户端提供的服务暂停数毫秒，或者甚至数秒</li>
+</ol>
+<h3 id="AOF"><a href="#AOF" class="headerlink" title="AOF"></a>AOF</h3><p>AOF机制对每条写入命令作为日志，以append-only的模式写入一个日志文件中，在redis重启的时候，可以通过回放AOF日志中的写入指令来重新构建整个数据集</p>
+<p>优点</p>
+<ol>
+<li>AOF可以更好的保护数据不丢失，一般AOF会每隔1秒，通过一个后台线程执行一次fsync操作，最多丢失1秒钟的数据</li>
+<li>AOF日志文件以append-only模式写入，所以没有任何磁盘寻址的开销，写入性能非常高，而且文件不容易破损，即使文件尾部破损，也很容易修复</li>
+<li>AOF日志文件即使过大的时候，出现后台重写操作，也不会影响客户端的读写。因为在rewrite log的时候，会对其中的指导进行压缩，创建出一份需要恢复数据的最小日志出来。再创建新日志文件的时候，老的日志文件还是照常写入。当新的merge后的日志文件ready的时候，再交换新老日志文件即可。</li>
+<li>AOF日志文件的命令通过非常可读的方式进行记录，这个特性非常适合做灾难性的误删除的紧急恢复。比如某人不小心用flushall命令清空了所有数据，只要这个时候后台rewrite还没有发生，那么就可以立即拷贝AOF文件，将最后一条flushall命令给删了，然后再将该AOF文件放回去，就可以通过恢复机制，自动恢复所有数据</li>
+</ol>
+<p>缺点</p>
+<ol>
+<li>对于同一份数据来说，AOF日志文件通常比RDB数据快照文件更大</li>
+<li>AOF开启后，支持的写QPS会比RDB支持的写QPS低，因为AOF一般会配置成每秒fsync一次日志文件，当然，每秒一次fsync，性能也还是很高的</li>
+<li>以前AOF发生过bug，就是通过AOF记录的日志，进行数据恢复的时候，没有恢复一模一样的数据出来。所以说，类似AOF这种较为复杂的基于命令日志&#x2F;merge&#x2F;回放的方式，比基于RDB每次持久化一份完整的数据快照文件的方式，更加脆弱一些，容易有bug。不过AOF就是为了避免rewrite过程导致的bug，因此每次rewrite并不是基于旧的指令日志进行merge的，而是基于当时内存中的数据进行指令的重新构建，这样健壮性会好很多。</li>
+</ol>
+<h3 id="RDB与AOF选择"><a href="#RDB与AOF选择" class="headerlink" title="RDB与AOF选择"></a>RDB与AOF选择</h3><ol>
+<li>不要仅仅使用RDB，因为那样会导致你丢失很多数据</li>
+<li>也不要仅仅使用AOF，因为那样有两个问题，第一，你通过AOF做冷备，没有RDB做冷备，来的恢复速度更快; 第二，RDB每次简单粗暴生成数据快照，更加健壮，可以避免AOF这种复杂的备份和恢复机制的bug</li>
+<li>综合使用AOF和RDB两种持久化机制，用AOF来保证数据不丢失，作为数据恢复的第一选择; 用RDB来做不同程度的冷备，在AOF文件都丢失或损坏不可用的时候，还可以使用RDB来进行快速的数据恢复</li>
+</ol>
+<h2 id="工作流程"><a href="#工作流程" class="headerlink" title="工作流程"></a>工作流程</h2><h3 id="RDB-1"><a href="#RDB-1" class="headerlink" title="RDB"></a>RDB</h3><p><strong>配置RDB持久化</strong><br>redis.conf文件：<code>save 60 1000</code><br>每隔60s，如果有超过1000个key发生了变更，那么就生成一个新的dump.rdb文件，就是当前redis内存中完整的数据快照，这个操作也被称之为snapshotting，快照<br>也可以手动调用save或者bgsave命令，同步或异步执行rdb快照生成<br>save可以设置多个，就是多个snapshotting检查点，每到一个检查点，就会去check一下，是否有指定的key数量发生了变更，如果有，就生成一个新的dump.rdb文件</p>
+<p><strong>RDB工作流程</strong></p>
+<ol>
+<li>redis根据配置自己尝试去生成rdb快照文件</li>
+<li>fork一个子进程出来</li>
+<li>子进程尝试将数据dump到临时的rdb快照文件中</li>
+<li>完成rdb快照文件的生成之后，就替换之前的旧的快照文件</li>
+</ol>
+<p>dump.rdb，每次生成一个新的快照，都会覆盖之前的老快照</p>
+<h3 id="AOF-1"><a href="#AOF-1" class="headerlink" title="AOF"></a>AOF</h3><p><strong>配置AOF持久化</strong><br>AOF持久化，默认是关闭的，默认是打开RDB持久化<br><code>appendonly yes</code><br>在生产环境里面，一般来说AOF都是要打开的</p>
+<p><strong>AOF流程</strong><br>打开AOF持久化机制之后，redis每次接收到一条写命令，就会写入日志文件中，当然是先写入os cache的，然后每隔一定时间再fsync一下</p>
+<p>而且即使AOF和RDB都开启了，redis重启的时候，也是优先通过AOF进行数据恢复的，因为aof数据比较完整</p>
+<p><strong>AOF的fsync策略</strong></p>
+<ul>
+<li>always</li>
+</ul>
+<p>每次写入一条数据，立即将这个数据对应的写日志fsync到磁盘上去，性能非常非常差，吞吐量很低</p>
+<ul>
+<li>everysec</li>
+</ul>
+<p>每秒将os cache中的数据fsync到磁盘，这个最常用的，生产环境一般都这么配置，性能很高，QPS还是可以上万的</p>
+<ul>
+<li>no</li>
+</ul>
+<p> 仅仅redis负责将数据写入os cache就撒手不管了，然后后面os自己会时不时有自己的策略将数据刷入磁盘，不可控了</p>
+<h3 id="AOF-rewrite"><a href="#AOF-rewrite" class="headerlink" title="AOF rewrite"></a>AOF rewrite</h3><p>redis中的数据其实有限的，很多数据可能会自动过期，可能会被用户删除，可能会被redis用缓存清除的算法清理掉。redis中的数据会不断淘汰掉旧的，就一部分常用的数据会被自动保留在redis内存中。所以可能很多之前的已经被清理掉的数据，对应的写日志还停留在AOF中，AOF日志文件就一个，会不断的膨胀，到很大很大<br>AOF会自动在后台每隔一定时间做rewrite操作，比如日志里已经存放了针对100w数据的写日志了; redis内存只剩下10万; 基于内存中当前的10万数据构建一套最新的日志，到AOF中; 覆盖之前的老日志; 确保AOF日志文件不会过大，保持跟redis内存数据量一致</p>
+<p>在redis.conf中，可以配置rewrite策略</p>
+<p><code>auto-aof-rewrite-percentage 100</code><br><code>auto-aof-rewrite-min-size 64mb</code></p>
+<p>比如说上一次AOF rewrite之后，是128mb。然后就会接着128mb继续写AOF的日志，如果发现增长的比例，超过了之前的100%，256mb，就可能会去触发一次rewrite。但是此时还要去跟min-size，64mb去比较，256mb &gt; 64mb，才会去触发rewrite</p>
+<ol>
+<li>redis fork一个子进程</li>
+<li>子进程基于当前内存中的数据，构建日志，开始往一个新的临时的AOF文件中写入日志</li>
+<li>redis主进程，接收到client新的写操作之后，在内存中写入日志，同时新的日志也继续写入旧的AOF文件</li>
+<li>子进程写完新的日志文件之后，redis主进程将内存中的新日志再次追加到新的AOF文件中</li>
+<li>用新的日志文件替换掉旧的日志文件</li>
+</ol>
+<h3 id="AOF破损文件修复"><a href="#AOF破损文件修复" class="headerlink" title="AOF破损文件修复"></a>AOF破损文件修复</h3><p>如果redis在append数据到AOF文件时，机器宕机了，可能会导致AOF文件破损</p>
+<p>用<code>redis-check-aof --fix</code>命令来修复破损的AOF文件</p>
+<h3 id="AOF和RDB同时配置"><a href="#AOF和RDB同时配置" class="headerlink" title="AOF和RDB同时配置"></a>AOF和RDB同时配置</h3><ol>
+<li>如果RDB在执行snapshotting操作，那么redis不会执行AOF rewrite; 如果redis再执行AOF rewrite，那么就不会执行RDB snapshotting</li>
+<li>如果RDB在执行snapshotting，此时用户执行BGREWRITEAOF命令，那么等RDB快照生成之后，才会去执行AOF rewrite</li>
+<li>同时有RDB snapshot文件和AOF日志文件，那么redis重启的时候，会优先使用AOF进行数据恢复，因为其中的日志更完整</li>
+</ol>
+<h2 id="企业数据备份及容灾方案"><a href="#企业数据备份及容灾方案" class="headerlink" title="企业数据备份及容灾方案"></a>企业数据备份及容灾方案</h2><h3 id="持久化的配置策略"><a href="#持久化的配置策略" class="headerlink" title="持久化的配置策略"></a>持久化的配置策略</h3><p>在企业中，RDB的生成策略，用默认的也差不多</p>
+<p>save 60 10000<br>如果你希望尽可能确保说，RDB最多丢1分钟的数据，那么尽量就是每隔1分钟都生成一个快照，低峰期，数据量很少，也没必要<br>10000-&gt;生成RDB，1000-&gt;RDB，这个根据你自己的应用和业务的数据量，你自己去决定</p>
+<p>fsync，everysec<br>AOF一定要打开</p>
+<p>auto-aof-rewrite-percentage 100<br>就是当前AOF大小膨胀到超过上次100%，上次的两倍</p>
+<p>auto-aof-rewrite-min-size 64mb<br>根据你的数据量来定，16mb，32mb</p>
+<h3 id="数据备份方案"><a href="#数据备份方案" class="headerlink" title="数据备份方案"></a>数据备份方案</h3><p>RDB非常适合做冷备，每次生成之后，就不会再有修改了<br>数据备份方案</p>
+<ol>
+<li>写crontab定时调度脚本去做数据备份</li>
+<li>每小时都copy一份rdb的备份，到一个目录中去，仅仅保留最近48小时的备份</li>
+<li>每天都保留一份当日的rdb的备份，到一个目录中去，仅仅保留最近1个月的备份</li>
+<li>每次copy备份的时候，都把太旧的备份给删了</li>
+<li>每天晚上将当前服务器上所有的数据备份，发送一份到远程的云服务上去<figure class="highlight awk"><table><tr><td class="gutter"><div class="code-wrapper"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></div></td><td class="code"><pre><code class="hljs awk"><span class="hljs-regexp">/usr/</span>local/redis<br><br>每小时copy一次备份，删除<span class="hljs-number">48</span>小时前的数据<br><br>crontab -e<br><br><span class="hljs-number">0</span> * * * * sh <span class="hljs-regexp">/usr/</span>local<span class="hljs-regexp">/redis/</span>copy/redis_rdb_copy_hourly.sh<br><br>redis_rdb_copy_hourly.sh<br><br><span class="hljs-comment">#!/bin/sh </span><br><br>cur_date=`date +%Y%m%d%k`<br>rm -rf <span class="hljs-regexp">/usr/</span>local<span class="hljs-regexp">/redis/</span>snapshotting/<span class="hljs-variable">$cur_date</span><br>mkdir <span class="hljs-regexp">/usr/</span>local<span class="hljs-regexp">/redis/</span>snapshotting/<span class="hljs-variable">$cur_date</span><br>cp <span class="hljs-regexp">/var/</span>redis<span class="hljs-regexp">/6379/</span>dump.rdb <span class="hljs-regexp">/usr/</span>local<span class="hljs-regexp">/redis/</span>snapshotting/<span class="hljs-variable">$cur_date</span><br><br>del_date=`date -d -<span class="hljs-number">48</span>hour +%Y%m%d%k`<br>rm -rf <span class="hljs-regexp">/usr/</span>local<span class="hljs-regexp">/redis/</span>snapshotting/<span class="hljs-variable">$del_date</span><br><br>每天copy一次备份<br><br>crontab -e<br><br><span class="hljs-number">0</span> <span class="hljs-number">0</span> * * * sh <span class="hljs-regexp">/usr/</span>local<span class="hljs-regexp">/redis/</span>copy/redis_rdb_copy_daily.sh<br><br>redis_rdb_copy_daily.sh<br><br><span class="hljs-comment">#!/bin/sh </span><br><br>cur_date=`date +%Y%m%d`<br>rm -rf <span class="hljs-regexp">/usr/</span>local<span class="hljs-regexp">/redis/</span>snapshotting/<span class="hljs-variable">$cur_date</span><br>mkdir <span class="hljs-regexp">/usr/</span>local<span class="hljs-regexp">/redis/</span>snapshotting/<span class="hljs-variable">$cur_date</span><br>cp <span class="hljs-regexp">/var/</span>redis<span class="hljs-regexp">/6379/</span>dump.rdb <span class="hljs-regexp">/usr/</span>local<span class="hljs-regexp">/redis/</span>snapshotting/<span class="hljs-variable">$cur_date</span><br><br>del_date=`date -d -<span class="hljs-number">1</span>month +%Y%m%d`<br>rm -rf <span class="hljs-regexp">/usr/</span>local<span class="hljs-regexp">/redis/</span>snapshotting/<span class="hljs-variable">$del_date</span><br><br>每天一次将所有数据上传一次到远程的云服务器上去<br></code></pre></td></tr></table></figure></li>
+</ol>
+<h3 id="数据恢复方案"><a href="#数据恢复方案" class="headerlink" title="数据恢复方案"></a>数据恢复方案</h3><ul>
+<li>redis进程挂掉</li>
+</ul>
+<p>那么重启redis进程即可，直接基于AOF日志文件恢复数据<br>fsync everysec，最多就丢一秒的数</p>
+<ul>
+<li>redis进程所在的机器挂掉</li>
+</ul>
+<p>重启机器后，尝试重启redis进程，尝试直接基于AOF日志文件进行数据恢复<br>AOF没有破损，也是可以直接基于AOF恢复的<br>AOF append-only，顺序写入，如果AOF文件破损，那么用redis-check-aof fix</p>
+<ul>
+<li>redis当前最新的AOF和RDB文件出现了丢失&#x2F;损坏</li>
+</ul>
+<p>可以尝试基于该机器上当前的某个最新的RDB数据副本进行数据恢复。当前最新的AOF和RDB文件都出现了丢失&#x2F;损坏到无法恢复，一般不是机器的故障，人为导致</p>
+<ul>
+<li>redis机器上所有RDB文件全部损坏</li>
+</ul>
+<p>从远程服务上拉取最新的RDB快照回来回复数据</p>
+<ul>
+<li>如果发现重大的数据错误，比如某个小时上线的程序一下子将数据全部污染了，数据全错了</li>
+</ul>
+<p>可以选择某个更早的时间点，对数据进行恢复</p>
+<blockquote>
+<p>备份方案使用<code>appendonly.aof + dump.rdb</code>的时候，会优先使用appendonly.aof去恢复数据。<br>在数据完全丢失的情况下，基于rdb冷备，如何完美的恢复数据，同时还保持aof和rdb的双开：<br>停止redis，关闭aof，拷贝rdb备份，重启redis，确认数据恢复，直接在命令行热修改redis配置，打开aof，这个redis就会将内存中的数据对应的日志，写入aof文件中</p>
+</blockquote>
+<h1 id="主从架构"><a href="#主从架构" class="headerlink" title="主从架构"></a>主从架构</h1><p>一主多重架构<br>架构思路：redis replication -&gt; 主从架构 -&gt; 读写分离 -&gt; 水平扩容支撑读高并发<br>如果开启了主从架构，建议必须开启master node 的持久化</p>
+<h2 id="replication-核心机制"><a href="#replication-核心机制" class="headerlink" title="replication 核心机制"></a>replication 核心机制</h2><ol>
+<li>redis采用异步方式复制数据到slave节点，不过redis 2.8开始，slave node会周期性地确认自己每次复制的数据量</li>
+<li>一个master node是可以配置多个slave node的</li>
+<li>slave node也可以连接其他的slave node</li>
+<li>slave node做复制的时候，是不会block master node的正常工作的</li>
+<li>slave node在做复制的时候，也不会block对自己的查询操作，它会用旧的数据集来提供服务; 但是复制完成的时候，需要删除旧数据集，加载新数据集，这个时候就会暂停对外服务了</li>
+<li>slave node主要用来进行横向扩容，做读写分离，扩容的slave node可以提高读的吞吐量</li>
+</ol>
+<h2 id="主从架构-1"><a href="#主从架构-1" class="headerlink" title="主从架构"></a>主从架构</h2><h3 id="原理"><a href="#原理" class="headerlink" title="原理"></a>原理</h3><p>当启动一个slave node的时候，它会发送一个PSYNC命令给master node<br>如果这是slave node重新连接master node，那么master node仅仅会复制给slave部分缺少的数据; 否则如果是slave node第一次连接master node，那么会触发一次full resynchronization（全量复制）<br>开始full resynchronization的时候，master会启动一个后台线程，开始生成一份RDB快照文件，同时还会将从客户端收到的所有写命令缓存在内存中。RDB文件生成完毕之后，master会将这个RDB发送给slave，slave会先写入本地磁盘，然后再从本地磁盘加载到内存中。然后master会将内存中缓存的写命令发送给slave，slave也会同步这些数据。<br>slave node如果跟master node有网络故障，断开了连接，会自动重连。master如果发现有多个slave node都来重新连接，仅仅会启动一个rdb save操作，用一份数据服务所有slave node。</p>
+<h3 id="断点续传"><a href="#断点续传" class="headerlink" title="断点续传"></a>断点续传</h3><p>从redis 2.8开始，就支持主从复制的断点续传，如果主从复制过程中，网络连接断掉了，那么可以接着上次复制的地方，继续复制下去，而不是从头开始复制一份<br>master node会在内存中常见一个backlog，master和slave都会保存一个replica offset还有一个master id，offset就是保存在backlog中的。如果master和slave网络连接断掉了，slave会让master从上次的replica offset开始继续复制<br>但是如果没有找到对应的offset，那么就会执行一次resynchronization</p>
+<h3 id="无磁盘化复制"><a href="#无磁盘化复制" class="headerlink" title="无磁盘化复制"></a>无磁盘化复制</h3><p>master在内存中直接创建rdb，然后发送给slave，不会在自己本地落地磁盘了<br><code>repl-diskless-sync</code><br><code>repl-diskless-sync-delay</code>，等待一定时长再开始复制，因为要等更多slave重新连接过来</p>
+<h3 id="过期key处理"><a href="#过期key处理" class="headerlink" title="过期key处理"></a>过期key处理</h3><p>slave不会过期key，只会等待master过期key。如果master过期了一个key，或者通过LRU淘汰了一个key，那么会模拟一条del命令发送给slave。</p>
+<h2 id="完整流程"><a href="#完整流程" class="headerlink" title="完整流程"></a>完整流程</h2><h3 id="复制完整流程"><a href="#复制完整流程" class="headerlink" title="复制完整流程"></a>复制完整流程</h3><ol>
+<li>slave node启动，仅仅保存master node的信息，包括master node的host和ip(redis.conf里面的slaveof配置的)，但是复制流程没开始</li>
+<li>slave node内部有个定时任务，每秒检查是否有新的master node要连接和复制，如果发现，就跟master node建立socket网络连接</li>
+<li>slave node发送ping命令给master node</li>
+<li>口令认证，如果master设置了requirepass，那么salve node必须发送masterauth的口令过去进行认证</li>
+<li>master node第一次执行全量复制，将所有数据发给slave node</li>
+<li>master node后续持续将写命令，异步复制给slave node</li>
+</ol>
+<h3 id="数据同步核心机制"><a href="#数据同步核心机制" class="headerlink" title="数据同步核心机制"></a>数据同步核心机制</h3><ul>
+<li>master和slave都会维护一个offset</li>
+</ul>
+<p>master会在自身不断累加offset，slave也会在自身不断累加offset<br>slave每秒都会上报自己的offset给master，同时master也会保存每个slave的offset<br>这个倒不是说特定就用在全量复制的，主要是master和slave都要知道各自的数据的offset，才能知道互相之间的数据不一致的情况</p>
+<ul>
+<li>backlog</li>
+</ul>
+<p>master node有一个backlog，默认是1MB大小<br>master node给slave node复制数据时，也会将数据在backlog中同步写一份<br>backlog主要是用来做全量复制中断候的增量复制的</p>
+<ul>
+<li>master run id</li>
+</ul>
+<p><code>info server</code>，可以看到master run id<br>如果根据host+ip定位master node，是不靠谱的，如果master node重启或者数据出现了变化，那么slave node应该根据不同的run id区分，run id不同就做全量复制<br>如果需要不更改run id重启redis，可以使用redis-cli debug reload命令</p>
+<ul>
+<li>psync</li>
+</ul>
+<p>从节点使用psync从master node进行复制，psync runid offset<br>master node会根据自身的情况返回响应信息，可能是FULLRESYNC runid offset触发全量复制，可能是CONTINUE触发增量复制</p>
+<h3 id="全量复制"><a href="#全量复制" class="headerlink" title="全量复制"></a>全量复制</h3><ol>
+<li>master执行bgsave，在本地生成一份rdb快照文件</li>
+<li>master node将rdb快照文件发送给salve node，如果rdb复制时间超过60秒（repl-timeout），那么slave node就会认为复制失败，可以适当调节大这个参数</li>
+<li>对于千兆网卡的机器，一般每秒传输100MB，6G文件，很可能超过60s</li>
+<li>master node在生成rdb时，会将所有新的写命令缓存在内存中，在salve node保存了rdb之后，再将新的写命令复制给salve node</li>
+<li>client-output-buffer-limit slave 256MB 64MB 60，如果在复制期间，内存缓冲区持续消耗超过64MB，或者一次性超过256MB，那么停止复制，复制失败</li>
+<li>slave node接收到rdb之后，清空自己的旧数据，然后重新加载rdb到自己的内存中，同时基于旧的数据版本对外提供服务</li>
+<li>如果slave node开启了AOF，那么会立即执行BGREWRITEAOF，重写AOF</li>
+</ol>
+<p>rdb生成、rdb通过网络拷贝、slave旧数据的清理、slave aof rewrite，很耗费时间<br>如果复制的数据量在4G~6G之间，那么很可能全量复制时间消耗到1分半到2分钟</p>
+<h3 id="增量复制"><a href="#增量复制" class="headerlink" title="增量复制"></a>增量复制</h3><ol>
+<li>如果全量复制过程中，master-slave网络连接断掉，那么salve重新连接master时，会触发增量复制</li>
+<li>master直接从自己的backlog中获取部分丢失的数据，发送给slave node，默认backlog就是1MB</li>
+<li>msater就是根据slave发送的psync中的offset来从backlog中获取数据的</li>
+</ol>
+<h3 id="heartbeat"><a href="#heartbeat" class="headerlink" title="heartbeat"></a>heartbeat</h3><p>主从节点互相都会发送heartbeat信息<br>master默认每隔10秒发送一次heartbeat，salve node每隔1秒发送一个heartbeat</p>
+<h3 id="异步复制"><a href="#异步复制" class="headerlink" title="异步复制"></a>异步复制</h3><p>master每次接收到写命令之后，现在内部写入数据，然后异步发送给slave node</p>
+<h1 id="哨兵模式"><a href="#哨兵模式" class="headerlink" title="哨兵模式"></a>哨兵模式</h1><p>sentinal node<br>主从架构下的高可用实现</p>
+<h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p>哨兵主要功能</p>
+<ul>
+<li>集群监控</li>
+</ul>
+<p>负责监控redis master和slave进程是否正常工作</p>
+<ul>
+<li>消息通知</li>
+</ul>
+<p>如果某个redis实例有故障，那么哨兵负责发送消息作为报警通知给管理员</p>
+<ul>
+<li>故障转移</li>
+</ul>
+<p>如果master node挂掉了，会自动转移到slave node上</p>
+<ul>
+<li>配置中心</li>
+</ul>
+<p>如果故障转移发生了，通知client客户端新的master地址</p>
+<p>哨兵本身也是分布式的，作为一个哨兵集群去运行，互相协同工作</p>
+<ol>
+<li>故障转移时，判断一个master node是宕机了，需要大部分的哨兵都同意才行，涉及到了分布式选举的问题</li>
+<li>即使部分哨兵节点挂掉了，哨兵集群还是能正常工作的，因为如果一个作为高可用机制重要组成部分的故障转移系统本身是单点的，那就很坑爹了</li>
+</ol>
+<p>核心知识</p>
+<ol>
+<li>哨兵至少需要3个实例，来保证自己的健壮性</li>
+<li>哨兵 + redis主从的部署架构，是不会保证数据零丢失的，只能保证redis集群的高可用性</li>
+<li>对于哨兵 + redis主从这种复杂的部署架构，尽量在测试环境和生产环境，都进行充足的测试和演练</li>
+</ol>
+<p>为什么至少需要3个实例？<br>假设哨兵集群仅仅部署了2个哨兵实例，quorum&#x3D;1<br>master宕机，s1和s2之间只要有一个哨兵认为master宕机就可以进行切换，同时s1和s2之间会选举出一个哨兵执行故障转移。<br>同时这个时候，需要majority，也就是大多数哨兵都是运行的。(2的majority&#x3D;2，3的majority&#x3D;2，5的majority&#x3D;3，4的majority&#x3D;2)<br>哨兵如果宕机了一个，就没有majority来允许执行故障转移，和单机差不多。</p>
+<h2 id="数据丢失"><a href="#数据丢失" class="headerlink" title="数据丢失"></a>数据丢失</h2><h3 id="异步复制-1"><a href="#异步复制-1" class="headerlink" title="异步复制"></a>异步复制</h3><p>master -&gt; slave的复制是异步的，所以可能有部分数据还没复制到slave，master就宕机了，此时这些部分数据就丢失了</p>
+<h3 id="脑裂"><a href="#脑裂" class="headerlink" title="脑裂"></a>脑裂</h3><p>脑裂，也就是说，某个master所在机器突然脱离了正常的网络，跟其他slave机器不能连接，但是实际上master还运行着。此时哨兵可能就会认为master宕机了，然后开启选举，将其他slave切换成了master。这个时候，集群里就会有两个master，也就是所谓的脑裂<br>此时虽然某个slave被切换成了master，但是可能client还没来得及切换到新的master，还继续写向旧master的数据可能也丢失了<br>因此旧master再次恢复的时候，会被作为一个slave挂到新的master上去，自己的数据会清空，重新从新的master复制数据</p>
+<h3 id="解决方法"><a href="#解决方法" class="headerlink" title="解决方法"></a>解决方法</h3><p><code>min-slaves-to-write 1</code><br><code>min-slaves-max-lag 10</code><br>要求至少有1个slave，数据复制和同步的延迟不能超过10秒<br>如果说一旦所有的slave，数据复制和同步的延迟都超过了10秒钟，那么这个时候，master就不会再接收任何请求了，上面两个配置可以减少异步复制和脑裂导致的数据丢失</p>
+<ul>
+<li>减少异步复制的数据丢失</li>
+</ul>
+<p>有了min-slaves-max-lag这个配置，就可以确保说，一旦slave复制数据和ack延时太长，就认为可能master宕机后损失的数据太多了，那么就拒绝写请求，这样可以把master宕机时由于部分数据未同步到slave导致的数据丢失降低的可控范围内</p>
+<ul>
+<li>减少脑裂的数据丢失</li>
+</ul>
+<p>如果一个master出现了脑裂，跟其他slave丢了连接，那么上面两个配置可以确保说，如果不能继续给指定数量的slave发送数据，而且slave超过10秒没有给自己ack消息，那么就直接拒绝客户端的写请求。这样脑裂后的旧master就不会接受client的新数据，也就避免了数据丢失<br>上面的配置就确保了，如果跟任何一个slave丢了连接，在10秒后发现没有slave给自己ack，那么就拒绝新的写请求。因此在脑裂场景下，最多就丢失10秒的数据</p>
+<h2 id="核心原理"><a href="#核心原理" class="headerlink" title="核心原理"></a>核心原理</h2><h3 id="sdown和odown转换机制"><a href="#sdown和odown转换机制" class="headerlink" title="sdown和odown转换机制"></a>sdown和odown转换机制</h3><p>sdown和odown两种失败状态</p>
+<p>sdown是主观宕机，就一个哨兵如果自己觉得一个master宕机了，那么就是主观宕机<br>odown是客观宕机，如果quorum数量的哨兵都觉得一个master宕机了，那么就是客观宕机</p>
+<p>sdown达成的条件很简单，如果一个哨兵ping一个master，超过了<code>is-master-down-after-milliseconds</code>指定的毫秒数之后，就主观认为master宕机</p>
+<p>sdown到odown转换的条件很简单，如果一个哨兵在指定时间内，收到了quorum指定数量的其他哨兵也认为那个master是sdown了，那么就认为是odown了，客观认为master宕机</p>
+<h3 id="哨兵集群的自动发现机制"><a href="#哨兵集群的自动发现机制" class="headerlink" title="哨兵集群的自动发现机制"></a>哨兵集群的自动发现机制</h3><p>哨兵互相之间的发现，是通过redis的pub&#x2F;sub系统实现的，每个哨兵都会往__sentinel__:hello这个channel里发送一个消息，这时候所有其他哨兵都可以消费到这个消息，并感知到其他的哨兵的存在</p>
+<p>每隔两秒钟，每个哨兵都会往自己监控的某个master+slaves对应的__sentinel__:hello channel里发送一个消息，内容是自己的host、ip和runid还有对这个master的监控配置</p>
+<p>每个哨兵也会去监听自己监控的每个master+slaves对应的__sentinel__:hello channel，然后去感知到同样在监听这个master+slaves的其他哨兵的存在</p>
+<p>每个哨兵还会跟其他哨兵交换对master的监控配置，互相进行监控配置的同步</p>
+<h3 id="slave配置的自动纠正"><a href="#slave配置的自动纠正" class="headerlink" title="slave配置的自动纠正"></a>slave配置的自动纠正</h3><p>哨兵会负责自动纠正slave的一些配置，比如slave如果要成为潜在的master候选人，哨兵会确保slave在复制现有master的数据;<br>如果slave连接到了一个错误的master上，比如故障转移之后，那么哨兵会确保它们连接到正确的master上</p>
+<h3 id="选举算法"><a href="#选举算法" class="headerlink" title="选举算法"></a>选举算法</h3><p>如果一个master被认为odown了，而且majority哨兵都允许了主备切换，那么某个哨兵就会执行主备切换操作，此时首先要选举一个slave来</p>
+<p>会考虑slave的一些信息</p>
+<ul>
+<li>跟master断开连接的时长</li>
+<li>slave优先级</li>
+<li>复制offset</li>
+<li>run id</li>
+</ul>
+<p>如果一个slave跟master断开连接已经超过了down-after-milliseconds的10倍，外加master宕机的时长，那么slave就被认为不适合选举为master<br><code>(down-after-milliseconds * 10) + milliseconds_since_master_is_in_SDOWN_state</code></p>
+<p>接下来会对slave进行排序</p>
+<ul>
+<li>按照slave优先级进行排序，slave priority越低，优先级就越高</li>
+<li>如果slave priority相同，那么看replica offset，哪个slave复制了越多的数据，offset越靠后，优先级就越高</li>
+<li>如果上面两个条件都相同，那么选择一个run id比较小的那个slave</li>
+</ul>
+<h3 id="quorum和majority"><a href="#quorum和majority" class="headerlink" title="quorum和majority"></a>quorum和majority</h3><p>每次一个哨兵要做主备切换，首先需要quorum数量的哨兵认为odown，然后选举出一个哨兵来做切换，这个哨兵还得得到majority哨兵的授权，才能正式执行切换<br>如果quorum &lt; majority，比如5个哨兵，majority就是3，quorum设置为2，那么就3个哨兵授权就可以执行切换<br>但是如果quorum &gt;&#x3D; majority，那么必须quorum数量的哨兵都授权，比如5个哨兵，quorum是5，那么必须5个哨兵都同意授权，才能执行切换</p>
+<h3 id="configuration-epoch"><a href="#configuration-epoch" class="headerlink" title="configuration epoch"></a>configuration epoch</h3><p>哨兵会对一套redis master+slave进行监控，有相应的监控的配置<br>执行切换的那个哨兵，会从要切换到的新master（salve-&gt;master）那里得到一个configuration epoch，这就是一个version号，每次切换的version号都必须是唯一的<br>如果第一个选举出的哨兵切换失败了，那么其他哨兵，会等待failover-timeout时间，然后接替继续执行切换，此时会重新获取一个新的configuration epoch，作为新的version号</p>
+<h3 id="configuraiton传播"><a href="#configuraiton传播" class="headerlink" title="configuraiton传播"></a>configuraiton传播</h3><p>哨兵完成切换之后，会在自己本地更新生成最新的master配置，然后同步给其他的哨兵，就是通过之前说的pub&#x2F;sub消息机制<br>这里之前的version号就很重要了，因为各种消息都是通过一个channel去发布和监听的，所以一个哨兵完成一次新的切换之后，新的master配置是跟着新的version号的<br>其他的哨兵都是根据版本号的大小来更新自己的master配置的</p>
+<h1 id="集群架构"><a href="#集群架构" class="headerlink" title="集群架构"></a>集群架构</h1><p>redis cluster<br>多master + 读写分离 + 高可用</p>
+<h2 id="redis-cluster"><a href="#redis-cluster" class="headerlink" title="redis cluster"></a>redis cluster</h2><p>作用</p>
+<ul>
+<li>自动将数据进行分片，每个master上放一部分数据</li>
+<li>提供内置的高可用支持，部分master不可用时，还是可以继续工作的</li>
+</ul>
+<p>在redis cluster架构下，每个redis要放开两个端口号，比如一个是6379，另外一个就是加10000的端口号，比如16379。16379端口号是用来进行节点间通信的，也就是cluster bus的东西，集群总线。cluster bus的通信，用来进行故障检测，配置更新，故障转移授权</p>
+<h3 id="一致性hash算法-虚拟节点"><a href="#一致性hash算法-虚拟节点" class="headerlink" title="一致性hash算法+虚拟节点"></a>一致性hash算法+虚拟节点</h3><p>一致性hash算法：<br>key过来以后，计算hash值，然后会用hash值在圆环上对应的各个点上(每个点都有一个hash值)去比对，看hash值应该落在圆环的哪个部位。<br>key落在圆环上以后，会顺时针去寻找距离最近的一个节点。<br>一致性hash算法，保证任何一个master宕机，只有之前在那个master上的数据，会受到影响。<br>虚拟节点：<br>给每个master都做了均匀分布的虚拟节点，保证在每个区间内，大量的数据，都会均匀分布到不同的节点内，而不是按照顺时针的顺序全部涌入同一个master。</p>
+<h3 id="hash-slot算法"><a href="#hash-slot算法" class="headerlink" title="hash slot算法"></a>hash slot算法</h3><p>redis cluster有固定的16384个hash slot，对每个key计算CRC16值，然后对16384取模，可以获取key对应的hash slot<br>redis cluster中每个master都会持有部分slot，比如有3个master，那么可能每个master持有5000多个hash slot<br>hash slot让node的增加和移除很简单，增加一个master，就将其他master的hash slot移动部分过去，减少一个master，就将它的hash slot移动到其他master上去</p>
+<h2 id="节点间内部通信机制"><a href="#节点间内部通信机制" class="headerlink" title="节点间内部通信机制"></a>节点间内部通信机制</h2><h3 id="基础通信原理"><a href="#基础通信原理" class="headerlink" title="基础通信原理"></a>基础通信原理</h3><ul>
+<li>redis cluster节点间采取gossip协议进行通信</li>
+</ul>
+<p>跟集中式不同，不是将集群元数据（节点信息，故障，等等）集中存储在某个节点上，而是互相之间不断通信，保持整个集群所有节点的数据是完整的<br>维护集群的元数据用得，集中式，一种叫做gossip</p>
+<p>集中式：好处在于，元数据的更新和读取，时效性非常好，一旦元数据出现了变更，立即就更新到集中式的存储中，其他节点读取的时候立即就可以感知到; 不好在于，所有的元数据的跟新压力全部集中在一个地方，可能会导致元数据的存储有压力<br>gossip：好处在于，元数据的更新比较分散，不是集中在一个地方，更新请求会陆陆续续，打到所有节点上去更新，有一定的延时，降低了压力; 缺点，元数据更新有延时，可能导致集群的一些操作会有一些滞后</p>
+<ul>
+<li>10000端口</li>
+</ul>
+<p>每个节点都有一个专门用于节点间通信的端口，就是自己提供服务的端口号+10000，比如7001，那么用于节点间通信的就是17001端口<br>每隔节点每隔一段时间都会往另外几个节点发送ping消息，同时其他几点接收到ping之后返回pong</p>
+<ul>
+<li>交换的信息</li>
+</ul>
+<p>故障信息，节点的增加和移除，hash slot信息，等等</p>
+<h3 id="gossip协议"><a href="#gossip协议" class="headerlink" title="gossip协议"></a>gossip协议</h3><p>gossip协议包含多种消息，包括ping，pong，meet，fail，等等</p>
+<p>meet: 某个节点发送meet给新加入的节点，让新节点加入集群中，然后新节点就会开始与其他节点进行通信<br>redis-trib.rb add-node<br>其实内部就是发送了一个gossip meet消息，给新加入的节点，通知那个节点去加入我们的集群<br>ping: 每个节点都会频繁给其他节点发送ping，其中包含自己的状态还有自己维护的集群元数据，互相通过ping交换元数据<br>每个节点每秒都会频繁发送ping给其他的集群，ping，频繁的互相之间交换数据，互相进行元数据的更新<br>pong: 返回ping和meet，包含自己的状态和其他信息，也可以用于信息广播和更新<br>fail: 某个节点判断另一个节点fail之后，就发送fail给其他节点，通知其他节点，指定的节点宕机了</p>
+<h3 id="ping消息"><a href="#ping消息" class="headerlink" title="ping消息"></a>ping消息</h3><p>ping很频繁，而且要携带一些元数据，所以可能会加重网络负担</p>
+<p>每个节点每秒会执行10次ping，每次会选择5个最久没有通信的其他节点<br>当然如果发现某个节点通信延时达到了cluster_node_timeout &#x2F; 2，那么立即发送ping，避免数据交换延时过长，落后的时间太长了<br>比如说，两个节点之间都10分钟没有交换数据了，那么整个集群处于严重的元数据不一致的情况，就会有问题<br>所以cluster_node_timeout可以调节，如果调节比较大，那么会降低发送的频率<br>每次ping，一个是带上自己节点的信息，还有就是带上1&#x2F;10其他节点的信息，发送出去，进行数据交换<br>至少包含3个其他节点的信息，最多包含总节点-2个其他节点的信息</p>
+<h2 id="面向集群的jedis原理"><a href="#面向集群的jedis原理" class="headerlink" title="面向集群的jedis原理"></a>面向集群的jedis原理</h2><h3 id="基于重定向的客户端"><a href="#基于重定向的客户端" class="headerlink" title="基于重定向的客户端"></a>基于重定向的客户端</h3><p>redis-cli -c，自动重定向</p>
+<p>（1）请求重定向</p>
+<p>客户端可能会挑选任意一个redis实例去发送命令，每个redis实例接收到命令，都会计算key对应的hash slot</p>
+<p>如果在本地就在本地处理，否则返回moved给客户端，让客户端进行重定向</p>
+<p>cluster keyslot mykey，可以查看一个key对应的hash slot是什么</p>
+<p>用redis-cli的时候，可以加入-c参数，支持自动的请求重定向，redis-cli接收到moved之后，会自动重定向到对应的节点执行命令</p>
+<p>（2）计算hash slot</p>
+<p>计算hash slot的算法，就是根据key计算CRC16值，然后对16384取模，拿到对应的hash slot</p>
+<p>用hash tag可以手动指定key对应的slot，同一个hash tag下的key，都会在一个hash slot中，比如set mykey1:{100}和set mykey2:{100}</p>
+<p>（3）hash slot查找</p>
+<p>节点间通过gossip协议进行数据交换，就知道每个hash slot在哪个节点上</p>
+<h3 id="smart-jedis"><a href="#smart-jedis" class="headerlink" title="smart jedis"></a>smart jedis</h3><p>（1）什么是smart jedis</p>
+<p>基于重定向的客户端，很消耗网络IO，因为大部分情况下，可能都会出现一次请求重定向，才能找到正确的节点</p>
+<p>所以大部分的客户端，比如java redis客户端，就是jedis，都是smart的</p>
+<p>本地维护一份hashslot -&gt; node的映射表，缓存，大部分情况下，直接走本地缓存就可以找到hashslot -&gt; node，不需要通过节点进行moved重定向</p>
+<p>（2）JedisCluster的工作原理</p>
+<p>在JedisCluster初始化的时候，就会随机选择一个node，初始化hashslot -&gt; node映射表，同时为每个节点创建一个JedisPool连接池</p>
+<p>每次基于JedisCluster执行操作，首先JedisCluster都会在本地计算key的hashslot，然后在本地映射表找到对应的节点</p>
+<p>如果那个node正好还是持有那个hashslot，那么就ok; 如果说进行了reshard这样的操作，可能hashslot已经不在那个node上了，就会返回moved</p>
+<p>如果JedisCluter API发现对应的节点返回moved，那么利用该节点的元数据，更新本地的hashslot -&gt; node映射表缓存</p>
+<p>重复上面几个步骤，直到找到对应的节点，如果重试超过5次，那么就报错，JedisClusterMaxRedirectionException</p>
+<p>jedis老版本，可能会出现在集群某个节点故障还没完成自动切换恢复时，频繁更新hash slot，频繁ping节点检查活跃，导致大量网络IO开销</p>
+<p>jedis最新版本，对于这些过度的hash slot更新和ping，都进行了优化，避免了类似问题</p>
+<p>（3）hashslot迁移和ask重定向</p>
+<p>如果hash slot正在迁移，那么会返回ask重定向给jedis</p>
+<p>jedis接收到ask重定向之后，会重新定位到目标节点去执行，但是因为ask发生在hash slot迁移过程中，所以JedisCluster API收到ask是不会更新hashslot本地缓存</p>
+<p>已经可以确定说，hashslot已经迁移完了，moved是会更新本地hashslot-&gt;node映射表缓存的</p>
+<h2 id="高可用性与主备切换原理"><a href="#高可用性与主备切换原理" class="headerlink" title="高可用性与主备切换原理"></a>高可用性与主备切换原理</h2><p>redis cluster的高可用的原理，几乎跟哨兵是类似的</p>
+<h3 id="判断节点宕机"><a href="#判断节点宕机" class="headerlink" title="判断节点宕机"></a>判断节点宕机</h3><p>如果一个节点认为另外一个节点宕机，那么就是pfail，主观宕机</p>
+<p>如果多个节点都认为另外一个节点宕机了，那么就是fail，客观宕机，跟哨兵的原理几乎一样，sdown，odown</p>
+<p>在cluster-node-timeout内，某个节点一直没有返回pong，那么就被认为pfail</p>
+<p>如果一个节点认为某个节点pfail了，那么会在gossip ping消息中，ping给其他节点，如果超过半数的节点都认为pfail了，那么就会变成fail</p>
+<h3 id="从节点过滤"><a href="#从节点过滤" class="headerlink" title="从节点过滤"></a>从节点过滤</h3><p>对宕机的master node，从其所有的slave node中，选择一个切换成master node</p>
+<p>检查每个slave node与master node断开连接的时间，如果超过了cluster-node-timeout * cluster-slave-validity-factor，那么就没有资格切换成master</p>
+<p>这个也是跟哨兵是一样的，从节点超时过滤的步骤</p>
+<h3 id="从节点选举"><a href="#从节点选举" class="headerlink" title="从节点选举"></a>从节点选举</h3><p>哨兵：对所有从节点进行排序，slave priority，offset，run id</p>
+<p>每个从节点，都根据自己对master复制数据的offset，来设置一个选举时间，offset越大（复制数据越多）的从节点，选举时间越靠前，优先进行选举</p>
+<p>所有的master node开始slave选举投票，给要进行选举的slave进行投票，如果大部分master node（N&#x2F;2 + 1）都投票给了某个从节点，那么选举通过，那个从节点可以切换成master</p>
+<p>从节点执行主备切换，从节点切换为主节点</p>
+<h3 id="与哨兵比较"><a href="#与哨兵比较" class="headerlink" title="与哨兵比较"></a>与哨兵比较</h3><p>整个流程跟哨兵相比，非常类似，所以说，redis cluster功能强大，直接集成了replication和sentinal的功能</p>
+<h1 id="常见问题"><a href="#常见问题" class="headerlink" title="常见问题"></a>常见问题</h1><h2 id="fork耗时导致高并发请求延时"><a href="#fork耗时导致高并发请求延时" class="headerlink" title="fork耗时导致高并发请求延时"></a>fork耗时导致高并发请求延时</h2><p>RDB和AOF的时候，其实会有生成RDB快照，AOF rewrite，耗费磁盘IO的过程，主进程fork子进程</p>
+<p>fork的时候，子进程是需要拷贝父进程的空间内存页表的，也是会耗费一定的时间的</p>
+<p>一般来说，如果父进程内存有1个G的数据，那么fork可能会耗费在20ms左右，如果是10G~30G，那么就会耗费20 * 10，甚至20 * 30，也就是几百毫秒的时间</p>
+<p>info stats中的latest_fork_usec，可以看到最近一次form的时长</p>
+<p>redis单机QPS一般在几万，fork可能一下子就会拖慢几万条操作的请求时长，从几毫秒变成1秒</p>
+<p>优化思路</p>
+<p>fork耗时跟redis主进程的内存有关系，一般控制redis的内存在10GB以内，slave -&gt; master，全量复制</p>
+<h2 id="AOF的阻塞问题"><a href="#AOF的阻塞问题" class="headerlink" title="AOF的阻塞问题"></a>AOF的阻塞问题</h2><p>redis将数据写入AOF缓冲区，单独开一个现场做fsync操作，每秒一次</p>
+<p>但是redis主线程会检查两次fsync的时间，如果距离上次fsync时间超过了2秒，那么写请求就会阻塞</p>
+<p>everysec，最多丢失2秒的数据</p>
+<p>一旦fsync超过2秒的延时，整个redis就被拖慢</p>
+<p>优化思路</p>
+<p>优化硬盘写入速度，建议采用SSD，不要用普通的机械硬盘，SSD，大幅度提升磁盘读写的速度</p>
+<h2 id="主从复制延迟问题"><a href="#主从复制延迟问题" class="headerlink" title="主从复制延迟问题"></a>主从复制延迟问题</h2><p>主从复制可能会超时严重，这个时候需要良好的监控和报警机制</p>
+<p>在info replication中，可以看到master和slave复制的offset，做一个差值就可以看到对应的延迟量</p>
+<p>如果延迟过多，那么就进行报警</p>
+<h2 id="主从复制风暴问题"><a href="#主从复制风暴问题" class="headerlink" title="主从复制风暴问题"></a>主从复制风暴问题</h2><p>如果一下子让多个slave从master去执行全量复制，一份大的rdb同时发送到多个slave，会导致网络带宽被严重占用</p>
+<p>如果一个master真的要挂载多个slave，那尽量用树状结构，不要用星型结构</p>
+<h2 id="vm-overcommit-memory"><a href="#vm-overcommit-memory" class="headerlink" title="vm.overcommit_memory"></a>vm.overcommit_memory</h2><p>0: 检查有没有足够内存，没有的话申请内存失败<br>1: 允许使用内存直到用完为止<br>2: 内存地址空间不能超过swap + 50%</p>
+<p>如果是0的话，可能导致类似fork等操作执行失败，申请不到足够的内存空间</p>
+<p>cat &#x2F;proc&#x2F;sys&#x2F;vm&#x2F;overcommit_memory<br>echo “vm.overcommit_memory&#x3D;1” &gt;&gt; &#x2F;etc&#x2F;sysctl.conf<br>sysctl vm.overcommit_memory&#x3D;1</p>
+<h2 id="swapiness"><a href="#swapiness" class="headerlink" title="swapiness"></a>swapiness</h2><p>cat &#x2F;proc&#x2F;version，查看linux内核版本</p>
+<p>如果linux内核版本&lt;3.5，那么swapiness设置为0，这样系统宁愿swap也不会oom killer（杀掉进程）<br>如果linux内核版本&gt;&#x3D;3.5，那么swapiness设置为1，这样系统宁愿swap也不会oom killer</p>
+<p>保证redis不会被杀掉</p>
+<p>echo 0 &gt; &#x2F;proc&#x2F;sys&#x2F;vm&#x2F;swappiness<br>echo vm.swapiness&#x3D;0 &gt;&gt; &#x2F;etc&#x2F;sysctl.conf</p>
+<h2 id="最大打开文件句柄"><a href="#最大打开文件句柄" class="headerlink" title="最大打开文件句柄"></a>最大打开文件句柄</h2><p>ulimit -n 10032 10032</p>
+<p>自己去上网搜一下，不同的操作系统，版本，设置的方式都不太一样</p>
+<h2 id="tcp-backlog"><a href="#tcp-backlog" class="headerlink" title="tcp backlog"></a>tcp backlog</h2><p>cat &#x2F;proc&#x2F;sys&#x2F;net&#x2F;core&#x2F;somaxconn<br>echo 511 &gt; &#x2F;proc&#x2F;sys&#x2F;net&#x2F;core&#x2F;somaxconn</p>
+<h1 id="方案选择"><a href="#方案选择" class="headerlink" title="方案选择"></a>方案选择</h1><h2 id="第一套架构"><a href="#第一套架构" class="headerlink" title="第一套架构"></a>第一套架构</h2><p>如果你的数据量不大，单master就可以容纳，一般来说你的缓存的总量在10G以内就可以，那么建议按照以下架构去部署redis</p>
+<p>redis持久化+备份方案+容灾方案+replication（主从+读写分离）+sentinal（哨兵集群，3个节点，高可用性）</p>
+<p>可以支撑的数据量在10G以内，可以支撑的写QPS在几万左右，可以支撑的读QPS可以上10万以上（随你的需求，水平扩容slave节点就可以），可用性在99.99%</p>
+<h2 id="第二套架构"><a href="#第二套架构" class="headerlink" title="第二套架构"></a>第二套架构</h2><p>如果你的数据量很大，大型电商网站的商品详情页的架构（对标那些国内排名前三的大电商网站），数据量是很大的</p>
+<p>redis cluster</p>
+<ul>
+<li>多master分布式存储数据，水平扩容</li>
+<li>支撑更多的数据量，1T+以上没问题，只要扩容master即可</li>
+<li>读写QPS分别都达到几十万都没问题，只要扩容master即可，redis cluster，读写分离，支持不太好，readonly才能去slave上读</li>
+<li>支撑99.99%可用性，也没问题，slave -&gt; master的主备切换，冗余slave去进一步提升可用性的方案（每个master挂一个slave，但是整个集群再加个3个slave冗余一下）</li>
+</ul>
+
             </div>
             <hr>
             <div>

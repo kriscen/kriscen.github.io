@@ -16,16 +16,20 @@
   <meta name="author" content="kris cen">
   <meta name="keywords" content="">
   
-    <meta property="og:type" content="article">
+    <meta name="description" content="一、服务注册中心1.1 eureka server的请求压力假设eureka server是双机部署，然后eureka server两个机器之间会进行注册，完成eureka server集群的识别和构造。eureka server的设计原则，是纯粹基于自己内存设计。每一台eureka server机器，假设配置4核8G，部署eureka server每秒接收几百请求问题不大。eureka serv">
+<meta property="og:type" content="article">
 <meta property="og:title" content="Spring Cloud时效分析">
 <meta property="og:url" content="http://example.com/2022/05/12/%E6%BA%90%E7%A0%81/SpringCloud/SpringCloud%E6%97%B6%E6%95%88%E5%88%86%E6%9E%90/index.html">
 <meta property="og:site_name" content="kris&#39; cabin">
+<meta property="og:description" content="一、服务注册中心1.1 eureka server的请求压力假设eureka server是双机部署，然后eureka server两个机器之间会进行注册，完成eureka server集群的识别和构造。eureka server的设计原则，是纯粹基于自己内存设计。每一台eureka server机器，假设配置4核8G，部署eureka server每秒接收几百请求问题不大。eureka serv">
 <meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://cdn.nlark.com/yuque/0/2021/png/12966419/1636558702891-1e9dd217-0a55-4319-aefc-17132f195395.png#clientId=u606da3d1-12b4-4&crop=0&crop=0&crop=1&crop=1&from=ui&id=u9a898d79&margin=%5Bobject%20Object%5D&name=%E7%94%B5%E5%95%86%E7%B3%BB%E7%BB%9F%E5%BE%AE%E6%9C%8D%E5%8A%A1%E6%9E%B6%E6%9E%84%E6%94%B9%E9%80%A0%E4%B8%80%E6%9C%9F%E7%9A%84%E8%AF%A6%E7%BB%86%E8%AE%BE%E8%AE%A1%2810%29.png&originHeight=680&originWidth=1843&originalType=binary&ratio=1&rotation=0&showTitle=false&size=117241&status=done&style=none&taskId=u518509ac-1328-492a-88d3-520619b4b4f&title=">
 <meta property="article:published_time" content="2022-05-12T11:01:00.000Z">
-<meta property="article:modified_time" content="2022-07-05T15:24:40.144Z">
+<meta property="article:modified_time" content="2022-07-06T09:59:10.471Z">
 <meta property="article:author" content="kris cen">
 <meta property="article:tag" content="Spring Cloud">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://cdn.nlark.com/yuque/0/2021/png/12966419/1636558702891-1e9dd217-0a55-4319-aefc-17132f195395.png#clientId=u606da3d1-12b4-4&crop=0&crop=0&crop=1&crop=1&from=ui&id=u9a898d79&margin=%5Bobject%20Object%5D&name=%E7%94%B5%E5%95%86%E7%B3%BB%E7%BB%9F%E5%BE%AE%E6%9C%8D%E5%8A%A1%E6%9E%B6%E6%9E%84%E6%94%B9%E9%80%A0%E4%B8%80%E6%9C%9F%E7%9A%84%E8%AF%A6%E7%BB%86%E8%AE%BE%E8%AE%A1%2810%29.png&originHeight=680&originWidth=1843&originalType=binary&ratio=1&rotation=0&showTitle=false&size=117241&status=done&style=none&taskId=u518509ac-1328-492a-88d3-520619b4b4f&title=">
   
   
   <title>Spring Cloud时效分析 - kris&#39; cabin</title>
@@ -195,7 +199,7 @@
   
     <span class="post-meta mr-2">
       <i class="iconfont icon-chart"></i>
-      0 字
+      5.4k 字
     </span>
   
 
@@ -204,7 +208,7 @@
       <i class="iconfont icon-clock-fill"></i>
       
       
-      1 分钟
+      46 分钟
     </span>
   
 
@@ -236,7 +240,88 @@
             <h1 style="display: none">Spring Cloud时效分析</h1>
             
             <div class="markdown-body">
-              
+              <h1 id="一、服务注册中心"><a href="#一、服务注册中心" class="headerlink" title="一、服务注册中心"></a>一、服务注册中心</h1><h2 id="1-1-eureka-server的请求压力"><a href="#1-1-eureka-server的请求压力" class="headerlink" title="1.1 eureka server的请求压力"></a>1.1 eureka server的请求压力</h2><p>假设eureka server是双机部署，然后eureka server两个机器之间会进行注册，完成eureka server集群的识别和构造。eureka server的设计原则，是纯粹基于自己内存设计。<br>每一台eureka server机器，假设配置4核8G，部署eureka server每秒接收几百请求问题不大。<br>eureka server机器的压力来自于eureka client。eureka client每30s进行一次心跳请求，假设有100个服务，每个服务部署2个机器，就200个服务实例。30s可以接收200个心跳。每秒大概8-10个。大概使用此方法进行估算qps和服务压力。</p>
+<h2 id="1-2-服务注册的时效性"><a href="#1-2-服务注册的时效性" class="headerlink" title="1.2 服务注册的时效性"></a>1.2 服务注册的时效性</h2><p>在spring cloud环境下，eureka client是在<code>spring-cloud-netflix-eureka-client</code>里面，会自动初始化一个DiscoveryClient，并且还有一个额外的注册类EurekaServiceRegistry。这个类负责在服务启动的时候，立马向eureka server发起注册请求。<br><code>spring-cloud-netflix-eureka-server</code>工程，实际上在启动的时候，就会完成eureka-server的初始化的流程，然后就让eureka core基于了jersey来提供了一些restful的http接口，供eureka client来访问和请求<br><code>eureka-core</code>工程里，resources包下，有一个ApplicationResource，里面有个addInstance()方法，是负责接收服务注册的请求</p>
+<p>**服务注册的时效性应当是毫秒级。 **</p>
+<p>验证方式：</p>
+<ol>
+<li>启动eureka server，启动的时候会在addInstance里面会先收到来自自身的注册请求，虽然不会进行注册。因为eureka server本身也是一个eureka client。</li>
+<li>启动ServerA。在EurekaServiceRegistry先初始化，然后就会向eureka server进行注册。此处进行了代理，需要去真正请求的地方即DiscoveryCLient.register()中。</li>
+<li>在client中发完请求会发现，直接在server中接收到注册请求。</li>
+</ol>
+<h2 id="1-3-服务发现的时效性"><a href="#1-3-服务发现的时效性" class="headerlink" title="1.3 服务发现的时效性"></a>1.3 服务发现的时效性</h2><h3 id="服务刚启动时的时效性"><a href="#服务刚启动时的时效性" class="headerlink" title="服务刚启动时的时效性"></a>服务刚启动时的时效性</h3><p>验证服务刚启动时，发现启发所有服务的时效性。</p>
+<blockquote>
+<p>场景：<br>先启动一个服务A的一台机器，然后启动服务B。服务B是依赖于服务A的。因此在源码中，服务B获取注册表的时候，是否可以得到服务A信息.</p>
+</blockquote>
+<p>服务B在启动的时候，会直接去抓取全量注册表，发送一个http请求到eureka server。<br><code>[Application [name=SERVICEA, isDirty=true, instances=[com.netflix.appinfo.InstanceInfo@a7d576d6], shuffledInstances=null, instancesMap=&#123;localhost:ServiceA:8080=com.netflix.appinfo.InstanceInfo@a7d576d6&#125;]]</code></p>
+<p>服务刚启动的时候，立马发现其他所有服务的时效性是毫秒级。立马会发送一个请求，获取所有的注册表。</p>
+<h3 id="获取增量的时效性"><a href="#获取增量的时效性" class="headerlink" title="获取增量的时效性"></a>获取增量的时效性</h3><p>&#x2F;&#x2F;TODO 服务注册的时候会重新清理ReadWriteCacheMap读写缓存？</p>
+<ol>
+<li>最开始只有服务A进行服务注册，注册表、ReadWriteCacheMap、ReadOnlyCacheMap依次复制服务A的实例信息。</li>
+<li>服务B启动，全量拉取注册表的时候，会按ReadOnlyCacheMap、ReadWriteCacheMap、注册表的顺序获取注册表。</li>
+<li>服务A的第二个实例启动。注册表中直接增加。然后ReadWriteCacheMap会清除缓存</li>
+<li>服务B的30s定时拉取增量注册表，会从ReadOnlyCacheMap获取，而ReadOnlyCacheMap与ReadWriteCacheMap定时同步也需要30s的时间。因此会有两种情况<ol>
+<li>ReadOnlyCacheMap未同步，使用过期数据给服务B获取。此时服务B的注册表会在下一轮更新为最新</li>
+<li>ReadOnlyCacheMap已同步，服务B的注册表在此轮更新为最新</li>
+</ol>
+</li>
+</ol>
+<p>eureka服务发现是分钟级的时效性。<br>一般服务发现是在服务进行扩容的时候，扩容的时候1分钟是可以接收的</p>
+<h2 id="1-4-服务心跳间隔"><a href="#1-4-服务心跳间隔" class="headerlink" title="1.4 服务心跳间隔"></a>1.4 服务心跳间隔</h2><p>任何服务在启动一段时间后，都会定时发送心跳通知，通知eureka server自己是存活状态。</p>
+<p><code>spring-cloud-netflix-eureka-client</code>工程中<code>EurekaInstanceConfigBean</code>配置了默认发送心跳的时间30s。</p>
+<p>eureka.client.leaseRenewalIntervalInSeconds &#x3D; 30</p>
+<h2 id="1-5-服务故障自我感知的时效性"><a href="#1-5-服务故障自我感知的时效性" class="headerlink" title="1.5 服务故障自我感知的时效性"></a>1.5 服务故障自我感知的时效性</h2><p>在eureka server中，每隔60s执行一次evict task，去判断一下当前所有的服务实例，是否有服务实例出现故障。</p>
+<p>eureka.server.evictionIntervalTimerInMs &#x3D; 60 * 1000</p>
+<ol>
+<li>获取一个补偿时间，为了避免EvictTask两次调度的时间超过了设置的60s</li>
+<li>遍历注册表中所有的服务实例，然后调用Lease的isExpire方法，判断当前这个服务实例的租约是否到期。如果是故障的服务实例就放入一个列表。入股上次的心跳到现在间隔90s*2，3分钟，才会任务是故障了，</li>
+<li>2个缓存map的同步误差30s，以及服务增量30s拉取一次。</li>
+<li>以上时间合计最大为5分钟。</li>
+</ol>
+<p><strong>服务B感知服务A那台机器宕机了，时效性在5分钟以内，起码三四分钟</strong></p>
+<h2 id="1-6-服务正常下线的时效性"><a href="#1-6-服务正常下线的时效性" class="headerlink" title="1.6 服务正常下线的时效性"></a>1.6 服务正常下线的时效性</h2><p>如果服务正常下线，执行DiscoveryClient的shutDown方法，此时其他服务感知到这个服务实例下线也是一分钟内</p>
+<p>2个缓存map同步30s+服务拉取30s</p>
+<h2 id="1-7-eureka-server自我保护的稳定性"><a href="#1-7-eureka-server自我保护的稳定性" class="headerlink" title="1.7 eureka server自我保护的稳定性"></a>1.7 eureka server自我保护的稳定性</h2><p>由于自我保护机制的代码中，期望心跳都是按照30s一次计算，因此不可以改变心跳时间配置。</p>
+<p>自我保护机制的计算也统计不完全(缺少动作)，存在bug。因此不要启用此功能在线上。</p>
+<h2 id="1-8-eureka-server集群的负载均衡"><a href="#1-8-eureka-server集群的负载均衡" class="headerlink" title="1.8 eureka server集群的负载均衡"></a>1.8 eureka server集群的负载均衡</h2><p>探究在eureka server集群环境中，各个服务注册或者发送心跳，是如何请求eureka server集群的。</p>
+<ol>
+<li>第一次注册和后序心跳都是走的8761的机器，推断是根据application.yml中配置的server集群第一个地址。</li>
+<li>将8761停掉，然后观察服务心跳请求。发现在重试几次后，就会去请求8762的机器</li>
+<li>重新启动8761，在观察后序心跳请求。发现始终请求8762的机器。</li>
+</ol>
+<p>结论：<strong>在client端会配置eureka server列表，配置的第一个就会优先访问。如果那个server宕机了，在重试之后会访问其他的eureka server。并且后续都是访问后边的那个server</strong></p>
+<h2 id="1-9-eureka-server集群同步的时效性"><a href="#1-9-eureka-server集群同步的时效性" class="headerlink" title="1.9 eureka server集群同步的时效性"></a>1.9 eureka server集群同步的时效性</h2><p>eureka server集群环境中，其中一个机器接收到请求，之后会将请求转发给其他所有的机器。比如2个机器8761和8762,8761会将8762作为自己的peer nodes，在8761接收到请求之后，会发给8762。</p>
+<ol>
+<li>在接收到请求之后，会将集群数据同步任务放入acceptorQueue中，由AcceptorRunner后台线程处理，间隔10ms。</li>
+<li>queue中会每隔500ms将注册、心跳、下线打包成batch一个批次。</li>
+</ol>
+<p><strong>eureka server集群同步的时效性，基本上是在1s内，几百毫秒都是正常的</strong></p>
+<h1 id="二、服务调用"><a href="#二、服务调用" class="headerlink" title="二、服务调用"></a>二、服务调用</h1><p>ribbon + feign，主要是面向feign来做，ribbon作为feign底层依赖的机制来实现。</p>
+<h2 id="2-1-ribbon-eureka服务发现与故障感知的时效性"><a href="#2-1-ribbon-eureka服务发现与故障感知的时效性" class="headerlink" title="2.1 ribbon + eureka服务发现与故障感知的时效性"></a>2.1 ribbon + eureka服务发现与故障感知的时效性</h2><p>eureka client感知其他服务上线了一个新的服务实例的时间，在一分钟内。eureka client刚知道其他服务实例宕机，在五分钟以内。</p>
+<p>假如服务A访问服务B，服务B在一开始就一个机器。</p>
+<p>某天服务B进行扩容，新增了一个机器。此时服务A本地的eureka client在一分钟感知到新增了一个服务B。ribbon的PollingServerListUpdater刚好是30s去刷新本地的eureka client的注册表到ribbon内部去。<br>也就是<strong>ribbon感知服务增加机器在1-2分钟之间。</strong></p>
+<p><strong>同理感知服务故障在5-6分钟之间</strong></p>
+<h2 id="2-2-ribbon的负载均衡算法"><a href="#2-2-ribbon的负载均衡算法" class="headerlink" title="2.2 ribbon的负载均衡算法"></a>2.2 ribbon的负载均衡算法</h2><p>在spring cloud环境下，使用ZoneAwareLoadBalancer机房感知负载均衡器。</p>
+<p>如果多机房部署的话，比如在上海和北京，各部署了一部分机器在一个机房里。一个系统中，购物车有10个服务，库存有10个服务。在北京机房里，购物车服务放了5台机器，库存服务放了5台机器；在上海机房里，购物车服务也是5台机器，库存服务也是5台机器。</p>
+<p>然后ZoneAwareLoadBalancer，比如说北京机房里的购物车服务，现在要访问库存服务，优先是同机房访问，北京机房的机器，尽可能就是优先访问自己北京机房里的库存服务的5台机器</p>
+<p>那么就是在北京机房的库存服务的5台机器中进行负载均衡。</p>
+<p>在不考虑机房的情况下，直接是使用普通的轮询算法。</p>
+<h2 id="2-3-feign-ribbon的服务调用的超时和重试"><a href="#2-3-feign-ribbon的服务调用的超时和重试" class="headerlink" title="2.3 feign+ribbon的服务调用的超时和重试"></a>2.3 feign+ribbon的服务调用的超时和重试</h2><p>比如库存服务有2台机器，其中一台机器故障宕机了，如果要让依赖库存服务的购物车服务感知到，可能需要几分钟的时间，三四分钟，五六分钟，都有可能。</p>
+<p>比如说在这几分钟的时间里面，ribbon内部的保存的库存服务的server list，还是2台机器，此时不断的请求过来，ribbon负载均衡算法还是会不断的将请求流量分发给库存服务已经宕机的那台机器。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><div class="code-wrapper"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></div></td><td class="code"><pre><code class="hljs java">ribbon:<br>	# 连接一台机器的超时时间<br>	ConnectTimeout: <span class="hljs-number">1000</span>     <br>    # 向一台机器发起请求的时间<br>	ReadTimeout: <span class="hljs-number">1000</span><br>    # 是否所有操作异常开启重试<br>	OkToRetryOnAllOperations: <span class="hljs-literal">true</span><br>    # 同一实例最大重试次数，不包括首次调用<br>	MaxAutoRetries: <span class="hljs-number">1</span><br>    # 重试其他实例的最大重试次数，不包括首次所选的server<br>	MaxAutoRetriesNextServer: <span class="hljs-number">3</span><br></code></pre></td></tr></table></figure>
+<h1 id="三、服务网关"><a href="#三、服务网关" class="headerlink" title="三、服务网关"></a>三、服务网关</h1><h2 id="3-1-ribbon预加载"><a href="#3-1-ribbon预加载" class="headerlink" title="3.1 ribbon预加载"></a>3.1 ribbon预加载</h2><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs java">zuul:<br>	ribbon:<br>		eager-load:<br>			enabled: <span class="hljs-literal">true</span><br><br></code></pre></td></tr></table></figure>
+<h2 id="3-2-zuul-ribbon-eureka感知服务上线和故障的时效性"><a href="#3-2-zuul-ribbon-eureka感知服务上线和故障的时效性" class="headerlink" title="3.2 zuul+ribbon+eureka感知服务上线和故障的时效性"></a>3.2 zuul+ribbon+eureka感知服务上线和故障的时效性</h2><p>zuul感知服务上线和ribbon一样，在1-2分钟之间。</p>
+<p>感知服务宕机也是在5-6分钟。</p>
+<p>假如某个服务宕机了，zuul由于整合了hystrix，hystrix会感知请求失败，直接走hystrix的降级逻辑。</p>
+<h2 id="3-3-请求超时和重试"><a href="#3-3-请求超时和重试" class="headerlink" title="3.3 请求超时和重试"></a>3.3 请求超时和重试</h2><p>如果某个服务实例突然挂了，zuul在默认情况下无法处理这种情况。zuul会打印error日志，并返回一段异常的json串给前端。<br>默认情况下虽然使用了hystrix，但是没有降级策略，没办法做任何处理，只能把异常打印出来。因此需要设置最基本的重试策略。</p>
+<p>zuul使用了hystrix+ribbon，因此超时需要考虑hystrix和ribbon，并且hystrix的超时要考虑ribbon的重试次数和单次超时时间。</p>
+<p>hystrix整合了ribbon，因此hystrix的超时时间必须大于ribbon的超时时间，否则如果hystrix设置了超时1s,ribbon设置的市场是2s，那么ribbon其实还没超时，hystrix就显示超时了。<br><strong>hystrix的超时时长最好远大于ribbon超时时长，超时和重试都尽量以ribbon为主。</strong></p>
+<p>hystrix的超时时间计算公式：<br>(ribbon.ConnetTimeout + ribbon.ReadTimeout) * (ribbon.MaxAutoRetries + 1) * (ribbon.MaxAutoRetriesNextServer + 1)</p>
+<p>如果不配置ribbon的超时时间，默认的hystrix超时时间是4000ms。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><code class="hljs java">		&lt;dependency&gt;<br>	        &lt;groupId&gt;org.springframework.retry&lt;/groupId&gt;<br>		    &lt;artifactId&gt;spring-retry&lt;/artifactId&gt;<br>		&lt;/dependency&gt;<br><br>zuul:<br>  retryable: <span class="hljs-literal">true</span><br><br>ribbon:<br>  ReadTimeout:<span class="hljs-number">1000</span><br>  ConnectTimeout:<span class="hljs-number">1000</span><br>  MaxAutoRetries:<span class="hljs-number">1</span><br>  MaxAutoRetriesNextServer:<span class="hljs-number">1</span><br><br>hystrix:<br>  command:<br>    <span class="hljs-keyword">default</span>:<br>      execution:<br>        isolation:<br>          thread:<br>            timeoutInMilliseconds: <span class="hljs-number">10000</span><br></code></pre></td></tr></table></figure>
+<p>正常情况下是用的：RibbonLoadBalancingHttpClient<br>但是如果将zuul.retrayable设置为true之后：RetryableRibbonLoadBalancingHttpClient</p>
+<h1 id="四、整体流程图"><a href="#四、整体流程图" class="headerlink" title="四、整体流程图"></a>四、整体流程图</h1><p><img src="https://cdn.nlark.com/yuque/0/2021/png/12966419/1636558702891-1e9dd217-0a55-4319-aefc-17132f195395.png#clientId=u606da3d1-12b4-4&crop=0&crop=0&crop=1&crop=1&from=ui&id=u9a898d79&margin=%5Bobject%20Object%5D&name=%E7%94%B5%E5%95%86%E7%B3%BB%E7%BB%9F%E5%BE%AE%E6%9C%8D%E5%8A%A1%E6%9E%B6%E6%9E%84%E6%94%B9%E9%80%A0%E4%B8%80%E6%9C%9F%E7%9A%84%E8%AF%A6%E7%BB%86%E8%AE%BE%E8%AE%A1%2810%29.png&originHeight=680&originWidth=1843&originalType=binary&ratio=1&rotation=0&showTitle=false&size=117241&status=done&style=none&taskId=u518509ac-1328-492a-88d3-520619b4b4f&title=" srcset="/img/loading.gif" lazyload alt="电商系统微服务架构改造一期的详细设计(10).png"></p>
+
             </div>
             <hr>
             <div>

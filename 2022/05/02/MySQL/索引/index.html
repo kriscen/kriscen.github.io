@@ -16,16 +16,20 @@
   <meta name="author" content="kris cen">
   <meta name="keywords" content="">
   
-    <meta property="og:type" content="article">
+    <meta name="description" content="物理存储结构数据页结构数据页之间组成双向链表，然后数据页内部的数据行组成单向链表，并且数据行根据主键从小到大排序。每个数据页存在一个页目录，里面根据数据行的主键存放了一个目录，同时数据行是被分散到存储到不同槽位中。所以实际上每个数据页的目录中，就是这个页里每个主键跟所在槽位的映射。 全表扫描 如果查询的是主键，会在页目录中进行二分查找 然后到对应数据页继续进行二分查找 如果查询的不是主键，会读取表">
+<meta property="og:type" content="article">
 <meta property="og:title" content="索引">
 <meta property="og:url" content="http://example.com/2022/05/02/MySQL/%E7%B4%A2%E5%BC%95/index.html">
 <meta property="og:site_name" content="kris&#39; cabin">
+<meta property="og:description" content="物理存储结构数据页结构数据页之间组成双向链表，然后数据页内部的数据行组成单向链表，并且数据行根据主键从小到大排序。每个数据页存在一个页目录，里面根据数据行的主键存放了一个目录，同时数据行是被分散到存储到不同槽位中。所以实际上每个数据页的目录中，就是这个页里每个主键跟所在槽位的映射。 全表扫描 如果查询的是主键，会在页目录中进行二分查找 然后到对应数据页继续进行二分查找 如果查询的不是主键，会读取表">
 <meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://cdn.nlark.com/yuque/0/2022/png/12966419/1651048696308-946a5d8e-8394-4554-a912-76b478e290d2.png#clientId=u4cacf8be-677a-4&crop=0&crop=0&crop=1&crop=1&from=paste&height=309&id=u20009c1f&margin=%5Bobject%20Object%5D&name=image.png&originHeight=309&originWidth=722&originalType=binary&ratio=1&rotation=0&showTitle=false&size=123366&status=done&style=none&taskId=uacf34772-7c59-46a2-b740-0581d3de3d0&title=&width=722">
 <meta property="article:published_time" content="2022-05-02T11:08:00.000Z">
-<meta property="article:modified_time" content="2022-07-05T15:07:29.931Z">
+<meta property="article:modified_time" content="2022-07-06T09:06:17.887Z">
 <meta property="article:author" content="kris cen">
 <meta property="article:tag" content="MySQL">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://cdn.nlark.com/yuque/0/2022/png/12966419/1651048696308-946a5d8e-8394-4554-a912-76b478e290d2.png#clientId=u4cacf8be-677a-4&crop=0&crop=0&crop=1&crop=1&from=paste&height=309&id=u20009c1f&margin=%5Bobject%20Object%5D&name=image.png&originHeight=309&originWidth=722&originalType=binary&ratio=1&rotation=0&showTitle=false&size=123366&status=done&style=none&taskId=uacf34772-7c59-46a2-b740-0581d3de3d0&title=&width=722">
   
   
   <title>索引 - kris&#39; cabin</title>
@@ -195,7 +199,7 @@
   
     <span class="post-meta mr-2">
       <i class="iconfont icon-chart"></i>
-      0 字
+      935 字
     </span>
   
 
@@ -204,7 +208,7 @@
       <i class="iconfont icon-clock-fill"></i>
       
       
-      1 分钟
+      8 分钟
     </span>
   
 
@@ -236,7 +240,45 @@
             <h1 style="display: none">索引</h1>
             
             <div class="markdown-body">
-              
+              <h1 id="物理存储结构"><a href="#物理存储结构" class="headerlink" title="物理存储结构"></a>物理存储结构</h1><h2 id="数据页"><a href="#数据页" class="headerlink" title="数据页"></a>数据页</h2><h3 id="结构"><a href="#结构" class="headerlink" title="结构"></a>结构</h3><p>数据页之间组成双向链表，然后数据页内部的数据行组成单向链表，并且数据行根据主键从小到大排序。<br>每个数据页存在一个页目录，里面根据数据行的主键存放了一个目录，同时数据行是被分散到存储到不同槽位中。所以实际上每个数据页的目录中，就是这个页里每个主键跟所在槽位的映射。<br><img src="https://cdn.nlark.com/yuque/0/2022/png/12966419/1651048696308-946a5d8e-8394-4554-a912-76b478e290d2.png#clientId=u4cacf8be-677a-4&crop=0&crop=0&crop=1&crop=1&from=paste&height=309&id=u20009c1f&margin=%5Bobject%20Object%5D&name=image.png&originHeight=309&originWidth=722&originalType=binary&ratio=1&rotation=0&showTitle=false&size=123366&status=done&style=none&taskId=uacf34772-7c59-46a2-b740-0581d3de3d0&title=&width=722" srcset="/img/loading.gif" lazyload alt="image.png"></p>
+<h3 id="全表扫描"><a href="#全表扫描" class="headerlink" title="全表扫描"></a>全表扫描</h3><ol>
+<li>如果查询的是主键，会在页目录中进行二分查找</li>
+<li>然后到对应数据页继续进行二分查找</li>
+<li>如果查询的不是主键，会读取表对应的第一个数据页到buffer pool进行数据行遍历</li>
+<li>如果第一个数据页查询不到，会继续加载下一个数据页继续遍历。</li>
+<li></li>
+</ol>
+<h3 id="页分裂"><a href="#页分裂" class="headerlink" title="页分裂"></a>页分裂</h3><p>当后一页数据页中的所有行不一定比前一页中的行的id大，触发页分裂。</p>
+<p>页分裂会保证后一个数据页中的所有行主键值比前一个数据页中主键值大。</p>
+<h1 id="索引"><a href="#索引" class="headerlink" title="索引*"></a>索引*</h1><h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><h3 id="主键索引"><a href="#主键索引" class="headerlink" title="主键索引"></a>主键索引</h3><p>聚簇索引</p>
+<h3 id="非主键索引"><a href="#非主键索引" class="headerlink" title="非主键索引"></a>非主键索引</h3><h3 id="回表查询"><a href="#回表查询" class="headerlink" title="回表查询"></a>回表查询</h3><h3 id="覆盖索引"><a href="#覆盖索引" class="headerlink" title="覆盖索引"></a>覆盖索引</h3><h2 id="索引使用规则"><a href="#索引使用规则" class="headerlink" title="索引使用规则"></a>索引使用规则</h2><h3 id="where语句索引规则"><a href="#where语句索引规则" class="headerlink" title="where语句索引规则"></a>where语句索引规则</h3><ul>
+<li>等值匹配</li>
+</ul>
+<p>where条件里的字段基于等值查询，并且where条件里的字段名称和联合索引一样。就是等值匹配规则<br>针对联合索引而言，依次按照各个字段进行二分查找，先定位到第一个字段对应的值在哪个页里，然后如果第一个字段有多条数据值一样，就根据第二个字段查找。<br>where语句的字段顺序和联合索引不一致没关系，MySQL会自动优化。</p>
+<ul>
+<li>最左侧列匹配</li>
+</ul>
+<p>联合索引KEY(A,B,C)，并不需要完全一致，只需要最左侧的部分字段匹配，也可以用上索引</p>
+<ul>
+<li>最左前缀匹配</li>
+</ul>
+<p>如果使用like语法，那么也可以匹配到索引</p>
+<ul>
+<li>范围查找规则</li>
+</ul>
+<p>where语句如果有范围查询，那只对联合索引里最左侧的列进行范围查询才能用上索引</p>
+<ul>
+<li>等值匹配+范围匹配</li>
+</ul>
+<h3 id="order-by语句索引规则"><a href="#order-by语句索引规则" class="headerlink" title="order by语句索引规则"></a>order by语句索引规则</h3><h3 id="group-by语句索引规则"><a href="#group-by语句索引规则" class="headerlink" title="group by语句索引规则"></a>group by语句索引规则</h3><h1 id="索引设计"><a href="#索引设计" class="headerlink" title="索引设计"></a>索引设计</h1><ol>
+<li>针对SQL语句的where条件、order by条件以及group by条件去设计索引，最好让where、order by和group by都可以用上联合索引最左侧开始的部分字段</li>
+<li>一般建立索引尽量使用那些基数比较大的字段，才能发挥B+树的二分查找的优势</li>
+<li>尽量对字段类型比较小的列设计索引，针对较长的字符串类型的列，可以设计前缀索引，仅仅包含部分字符到索引树中</li>
+<li>索引列套函数，就会导致索引失效</li>
+<li>索引设计不要太多，尽量两三个联合索引覆盖掉这个表的全部查询</li>
+<li>主键建议自增，不要使用UUID。为了让聚簇索引不要频繁的分裂。</li>
+</ol>
+
             </div>
             <hr>
             <div>

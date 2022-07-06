@@ -16,13 +16,15 @@
   <meta name="author" content="kris cen">
   <meta name="keywords" content="">
   
-    <meta property="og:type" content="article">
+    <meta name="description" content="ThreadLocal源码底层是获取每个线程自己持有的ThreadLocalMap，去获取值。 设置值1234567891011121314151617&#x2F;** * Sets the current thread&amp;#x27;s copy of this thread-local variable * to the specified value.  Most subclasses will have">
+<meta property="og:type" content="article">
 <meta property="og:title" content="ThreadLocal">
 <meta property="og:url" content="http://example.com/2022/05/14/%E6%BA%90%E7%A0%81/JDK/ThreadLocal/index.html">
 <meta property="og:site_name" content="kris&#39; cabin">
+<meta property="og:description" content="ThreadLocal源码底层是获取每个线程自己持有的ThreadLocalMap，去获取值。 设置值1234567891011121314151617&#x2F;** * Sets the current thread&amp;#x27;s copy of this thread-local variable * to the specified value.  Most subclasses will have">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2022-05-14T11:08:00.000Z">
-<meta property="article:modified_time" content="2022-07-05T15:29:20.284Z">
+<meta property="article:modified_time" content="2022-07-06T09:54:11.411Z">
 <meta property="article:author" content="kris cen">
 <meta property="article:tag" content="JDK">
 <meta name="twitter:card" content="summary_large_image">
@@ -195,7 +197,7 @@
   
     <span class="post-meta mr-2">
       <i class="iconfont icon-chart"></i>
-      0 字
+      1.1k 字
     </span>
   
 
@@ -204,7 +206,7 @@
       <i class="iconfont icon-clock-fill"></i>
       
       
-      1 分钟
+      10 分钟
     </span>
   
 
@@ -236,7 +238,11 @@
             <h1 style="display: none">ThreadLocal</h1>
             
             <div class="markdown-body">
-              
+              <h2 id="ThreadLocal源码"><a href="#ThreadLocal源码" class="headerlink" title="ThreadLocal源码"></a>ThreadLocal源码</h2><p>底层是获取每个线程自己持有的ThreadLocalMap，去获取值。</p>
+<h3 id="设置值"><a href="#设置值" class="headerlink" title="设置值"></a>设置值</h3><figure class="highlight java"><table><tr><td class="gutter"><div class="code-wrapper"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></div></td><td class="code"><pre><code class="hljs java"><span class="hljs-comment">/**</span><br><span class="hljs-comment"> * Sets the current thread&#x27;s copy of this thread-local variable</span><br><span class="hljs-comment"> * to the specified value.  Most subclasses will have no need to</span><br><span class="hljs-comment"> * override this method, relying solely on the &#123;<span class="hljs-doctag">@link</span> #initialValue&#125;</span><br><span class="hljs-comment"> * method to set the values of thread-locals.</span><br><span class="hljs-comment"> *</span><br><span class="hljs-comment"> * <span class="hljs-doctag">@param</span> value the value to be stored in the current thread&#x27;s copy of</span><br><span class="hljs-comment"> *        this thread-local.</span><br><span class="hljs-comment"> */</span><br><span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">set</span><span class="hljs-params">(T value)</span> &#123;<br>    <span class="hljs-type">Thread</span> <span class="hljs-variable">t</span> <span class="hljs-operator">=</span> Thread.currentThread();<br>    <span class="hljs-type">ThreadLocalMap</span> <span class="hljs-variable">map</span> <span class="hljs-operator">=</span> getMap(t);<br>    <span class="hljs-keyword">if</span> (map != <span class="hljs-literal">null</span>)<br>        map.set(<span class="hljs-built_in">this</span>, value);<br>    <span class="hljs-keyword">else</span><br>        createMap(t, value);<br>&#125;<br></code></pre></td></tr></table></figure>
+<h3 id="获取值"><a href="#获取值" class="headerlink" title="获取值"></a>获取值</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-comment">/**</span><br><span class="hljs-comment"> * Returns the value in the current thread&#x27;s copy of this</span><br><span class="hljs-comment"> * thread-local variable.  If the variable has no value for the</span><br><span class="hljs-comment"> * current thread, it is first initialized to the value returned</span><br><span class="hljs-comment"> * by an invocation of the &#123;<span class="hljs-doctag">@link</span> #initialValue&#125; method.</span><br><span class="hljs-comment"> *</span><br><span class="hljs-comment"> * <span class="hljs-doctag">@return</span> the current thread&#x27;s value of this thread-local</span><br><span class="hljs-comment"> */</span><br><span class="hljs-keyword">public</span> T <span class="hljs-title function_">get</span><span class="hljs-params">()</span> &#123;<br>    <span class="hljs-type">Thread</span> <span class="hljs-variable">t</span> <span class="hljs-operator">=</span> Thread.currentThread();<br>    <span class="hljs-type">ThreadLocalMap</span> <span class="hljs-variable">map</span> <span class="hljs-operator">=</span> getMap(t);<br>    <span class="hljs-keyword">if</span> (map != <span class="hljs-literal">null</span>) &#123;<br>        ThreadLocalMap.<span class="hljs-type">Entry</span> <span class="hljs-variable">e</span> <span class="hljs-operator">=</span> map.getEntry(<span class="hljs-built_in">this</span>);<br>        <span class="hljs-keyword">if</span> (e != <span class="hljs-literal">null</span>) &#123;<br>            <span class="hljs-meta">@SuppressWarnings(&quot;unchecked&quot;)</span><br>            <span class="hljs-type">T</span> <span class="hljs-variable">result</span> <span class="hljs-operator">=</span> (T)e.value;<br>            <span class="hljs-keyword">return</span> result;<br>        &#125;<br>    &#125;<br>    <span class="hljs-keyword">return</span> setInitialValue();<br>&#125;<br></code></pre></td></tr></table></figure>
+
+
             </div>
             <hr>
             <div>

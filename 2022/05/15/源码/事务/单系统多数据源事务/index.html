@@ -16,16 +16,20 @@
   <meta name="author" content="kris cen">
   <meta name="keywords" content="">
   
-    <meta property="og:type" content="article">
+    <meta name="description" content="一. XA规范X&#x2F;Open定义了的组织定义了分布式事务的模型，其中包含以下角色  AP(Application )应用程序 TM(Transaction Manager)事务管理器 RM(Resource Manager)资源管理器 CRM(Communication Resource Manager)通信资源管理器  通俗的将上述角色对应现在系统AP -&gt; 系统TM -&gt;">
+<meta property="og:type" content="article">
 <meta property="og:title" content="单系统多数据源事务">
 <meta property="og:url" content="http://example.com/2022/05/15/%E6%BA%90%E7%A0%81/%E4%BA%8B%E5%8A%A1/%E5%8D%95%E7%B3%BB%E7%BB%9F%E5%A4%9A%E6%95%B0%E6%8D%AE%E6%BA%90%E4%BA%8B%E5%8A%A1/index.html">
 <meta property="og:site_name" content="kris&#39; cabin">
+<meta property="og:description" content="一. XA规范X&#x2F;Open定义了的组织定义了分布式事务的模型，其中包含以下角色  AP(Application )应用程序 TM(Transaction Manager)事务管理器 RM(Resource Manager)资源管理器 CRM(Communication Resource Manager)通信资源管理器  通俗的将上述角色对应现在系统AP -&gt; 系统TM -&gt;">
 <meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://cdn.nlark.com/yuque/0/2021/jpeg/12966419/1637769107411-613b2994-6372-488d-bd30-1d2b0bceea5a.jpeg">
 <meta property="article:published_time" content="2022-05-15T11:03:00.000Z">
-<meta property="article:modified_time" content="2022-07-05T15:32:20.781Z">
+<meta property="article:modified_time" content="2022-07-06T09:57:47.465Z">
 <meta property="article:author" content="kris cen">
 <meta property="article:tag" content="事务">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://cdn.nlark.com/yuque/0/2021/jpeg/12966419/1637769107411-613b2994-6372-488d-bd30-1d2b0bceea5a.jpeg">
   
   
   <title>单系统多数据源事务 - kris&#39; cabin</title>
@@ -195,7 +199,7 @@
   
     <span class="post-meta mr-2">
       <i class="iconfont icon-chart"></i>
-      0 字
+      2k 字
     </span>
   
 
@@ -204,7 +208,7 @@
       <i class="iconfont icon-clock-fill"></i>
       
       
-      1 分钟
+      17 分钟
     </span>
   
 
@@ -236,7 +240,69 @@
             <h1 style="display: none">单系统多数据源事务</h1>
             
             <div class="markdown-body">
-              
+              <h1 id="一-XA规范"><a href="#一-XA规范" class="headerlink" title="一. XA规范"></a>一. XA规范</h1><p>X&#x2F;Open定义了的组织定义了分布式事务的模型，其中包含以下角色</p>
+<ul>
+<li>AP(Application )应用程序</li>
+<li>TM(Transaction Manager)事务管理器</li>
+<li>RM(Resource Manager)资源管理器</li>
+<li>CRM(Communication Resource Manager)通信资源管理器</li>
+</ul>
+<p>通俗的将上述角色对应现在系统<br>AP -&gt; 系统<br>TM -&gt; 一个专门管理横跨多个数据库的事务组件<br>RM -&gt; 数据库<br>CRM -&gt; 消息中间件(可以不用)</p>
+<p>XA接口规范仅仅是规范了TM和RM之间的通信交互规则，具体实现由数据库厂商实现。MySQL就会提供XA规范的接口函数和类库实现。</p>
+<h1 id="二-2PC理论"><a href="#二-2PC理论" class="headerlink" title="二. 2PC理论"></a>二. 2PC理论</h1><p>2PC(Two-Phase-Commitment-Protocol 二阶段提交协议)就是基于XA规范，让分布式事务可以落地，定义了分布式事务过程中的细节。</p>
+<h2 id="流程"><a href="#流程" class="headerlink" title="流程"></a>流程</h2><ol>
+<li>准备阶段</li>
+</ol>
+<p>TM先发送prepare消息给各个数据库，让各个库先把分布式事务里要执行的各种操作，先准备执行。此时各个库会差不多先执行好，就是不提交。</p>
+<ol start="2">
+<li>提交阶段</li>
+</ol>
+<p>各个数据库如果都告诉TM成功了，TM就会发消息给各个数据库说提交，然后各个数据库都在自己本地提交事务。整个分布式事务就成功了。<br>但是如果有一个告诉TM失败了，或者超时。TM就会判定整个分布式事务失败了，通知各个数据库回滚事务。各个数据库都回滚好了之后就通知TM，此时TM就认为整个分布式事务就回滚了。</p>
+<h2 id="缺陷"><a href="#缺陷" class="headerlink" title="缺陷"></a>缺陷</h2><ol>
+<li>同步阻塞</li>
+</ol>
+<p>在阶段一里面执行prepare操作会占用资源，一直到整个分布式事务完成，才会释放资源，在整个过程中，如果有其他人要访问这个资源，就会被阻塞。<br><img src="https://cdn.nlark.com/yuque/0/2021/jpeg/12966419/1637769107411-613b2994-6372-488d-bd30-1d2b0bceea5a.jpeg" srcset="/img/loading.gif" lazyload></p>
+<ol start="2">
+<li>单点故障</li>
+</ol>
+<p>TM是单点的，一旦挂了，事务就丢失了。</p>
+<ol start="3">
+<li>事务状态丢失</li>
+</ol>
+<p>即使把TM做成一个双机热备的，一个TM挂了自动选举其他的TM出来，但是如果TM挂掉的同时，接收到commit消息的某个库也挂了，此时即使重新选举了其他的TM，压根不知道这个分布式事务当前的状态，因为不知道哪个库接受过commit消息。</p>
+<ol start="4">
+<li>脑裂问题</li>
+</ol>
+<p>在二阶段中，如果发生了脑裂问题，那么就会导致某些数据库没有接收到comit消息。有些库收到了commit消息，结果有的库没有收到。</p>
+<h1 id="三-3PC理论"><a href="#三-3PC理论" class="headerlink" title="三. 3PC理论"></a>三. 3PC理论</h1><p>three-phase-commitment 三阶段提交协议</p>
+<ol>
+<li>CanCommit阶段</li>
+</ol>
+<p>TM发送一个CanCommit消息给各个数据库，然后各个库返回个结果。此阶段不会执行SQL语句，就是各个库看自己的网络环境及各方面是否准备好。</p>
+<ol start="2">
+<li>PreCommit阶段</li>
+</ol>
+<p>如果各个库对CanCommit消息返回的都是成功，那么进入PreCommit阶段。TM发送PreCommit消息给各个库，此时就相当于2PC中的阶段一。就会执行各个SQL语句，但是不会提交。如果有个库对CanCommit消息返回了失败，那么TM就发送abort消息给各个库，结束分布式事务。</p>
+<ol start="3">
+<li>DoCommit阶段</li>
+</ol>
+<p>如果各个库对PreCommit阶段都返回了成功，那么发送DoCommit消息给各个库，让各个库提交事务。如果各个库提交事务成功，那么分布式事务成功。如果有个库对PreComit返回失败或者超时一直没有返回，那么TM认为分布式事务失败，直接发abort消息给各个库回滚。各个库回滚成功之后通知TM，分布式事务回滚</p>
+<h2 id="改进"><a href="#改进" class="headerlink" title="改进"></a>改进</h2><ol>
+<li>引入了CanCommit阶段</li>
+<li>在DoCommit阶段，各个库有了超时机制。如果一个库收到了PreCommit自己还返回成功了，但是等了一会，如果超时时间到了，还没有接收到TM发送的DoCommit消息或者是abort消息，就判定TM可能故障，数据库自己就执行DoCommit操作提交事务。</li>
+</ol>
+<p>一个库如果接收到PreCommit消息，那么CanCommit阶段肯定已经过了，说明各个库的基本环境都ok。<br>那么在任何一个库的PreCommit成功之后，超时没有收到TM发的DoCommit消息，默认两个事情</p>
+<ol>
+<li>各个库的环境没有问题</li>
+<li>TM挂了</li>
+</ol>
+<p>因此会直接自己本地执行commit操作</p>
+<h2 id="缺陷-1"><a href="#缺陷-1" class="headerlink" title="缺陷"></a>缺陷</h2><p>由于DoCommit阶段的超时机制，可能TM发送了abort消息，但是因为脑裂问题，各个库没有收到abort消息，就自己执行commit操作了。</p>
+<h1 id="四、JTA与全局事务"><a href="#四、JTA与全局事务" class="headerlink" title="四、JTA与全局事务"></a>四、JTA与全局事务</h1><p>全局事务主要是针对X&#x2F;OPEN组织定义了一套分布式事务的模型和规范 DTP(Distributerd Transaction Processing Reference Model 分布式事务处理模型)，包含DTP,TM,RM,AP等角色的一套分布式事务模型。</p>
+<p>XA实际上就是一种借口规范，就是TM在和数据库RM进行通讯的时候的接口规范。</p>
+<p>全局事务，Global Transaction，是DTP模型中的一个概念，全局事务，指的其实就是说跨多个数据库的这么一个分布式事务</p>
+<p>JTA事务，站在另外一个角度，其实是J2EE中的一个概念，Java Transaction API，JTA一套分布式事务的编程API。按照XA、DTP那套模型和规范，在J2EE中，单库的事务是通过JDBC事务来支持的</p>
+
             </div>
             <hr>
             <div>
