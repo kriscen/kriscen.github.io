@@ -1,0 +1,581 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="kris cen">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="运行流程JVM运行流程  将.java文件编译为.class字节码文件 类加载器将.class字节码文件中的类加载到JVM中 JVM执行写好的类中的代码  类加载流程 加载 验证 准备 解析 初始化 使用 卸载加载阶段当代码里需要使用到这个类的时候，就需要加载  验证阶段根据Java虚拟机规范，校验加载进来的.class文件的内容是否符合指定的归档 准备阶段给类分配内存空间，然后给里面的变量(st">
+<meta property="og:type" content="article">
+<meta property="og:title" content="JVM概述">
+<meta property="og:url" content="http://example.com/2022/05/01/JVM/JVM%E6%A6%82%E8%BF%B0/index.html">
+<meta property="og:site_name" content="kris&#39; cabin">
+<meta property="og:description" content="运行流程JVM运行流程  将.java文件编译为.class字节码文件 类加载器将.class字节码文件中的类加载到JVM中 JVM执行写好的类中的代码  类加载流程 加载 验证 准备 解析 初始化 使用 卸载加载阶段当代码里需要使用到这个类的时候，就需要加载  验证阶段根据Java虚拟机规范，校验加载进来的.class文件的内容是否符合指定的归档 准备阶段给类分配内存空间，然后给里面的变量(st">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://cdn.nlark.com/yuque/0/2022/jpeg/12966419/1650332103295-2c92eb96-a9a4-44da-ac1d-a87222be02ef.jpeg">
+<meta property="og:image" content="https://cdn.nlark.com/yuque/0/2022/png/12966419/1650333345396-b7eac5b3-8670-4c8c-89ed-9fafaf9ac629.png#clientId=ucd5f05b7-da21-4&crop=0&crop=0&crop=1&crop=1&from=paste&height=370&id=ue5a25008&margin=%5Bobject%20Object%5D&name=image.png&originHeight=370&originWidth=262&originalType=binary&ratio=1&rotation=0&showTitle=false&size=8073&status=done&style=none&taskId=ude39a97f-e7f6-457b-a0a7-b232b8e9de0&title=&width=262">
+<meta property="og:image" content="https://cdn.nlark.com/yuque/0/2022/png/12966419/1650335156451-524eeb6d-e291-4933-8f7b-3ef1e7269b01.png#clientId=ucd5f05b7-da21-4&crop=0&crop=0&crop=1&crop=1&from=paste&height=416&id=ud98afa72&margin=%5Bobject%20Object%5D&name=image.png&originHeight=416&originWidth=581&originalType=binary&ratio=1&rotation=0&showTitle=false&size=21681&status=done&style=none&taskId=u47cde547-b04c-44e3-a5ff-9dbf62dcb82&title=&width=581">
+<meta property="og:image" content="https://cdn.nlark.com/yuque/0/2022/png/12966419/1650351916701-e12a8853-b1d9-45cf-b7aa-5e26f0b7dc14.png#clientId=ucd5f05b7-da21-4&crop=0&crop=0&crop=1&crop=1&from=paste&height=344&id=u57a1c73a&margin=%5Bobject%20Object%5D&name=image.png&originHeight=344&originWidth=368&originalType=binary&ratio=1&rotation=0&showTitle=false&size=9619&status=done&style=none&taskId=ucfe8876b-671b-4de2-9e56-60a6d3f7e9b&title=&width=368">
+<meta property="article:published_time" content="2022-05-01T11:01:00.000Z">
+<meta property="article:modified_time" content="2022-07-05T15:18:38.415Z">
+<meta property="article:author" content="kris cen">
+<meta property="article:tag" content="JVM">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://cdn.nlark.com/yuque/0/2022/jpeg/12966419/1650332103295-2c92eb96-a9a4-44da-ac1d-a87222be02ef.jpeg">
+  
+  
+  <title>JVM概述 - kris&#39; cabin</title>
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/css/bootstrap.min.css" />
+
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@4/github-markdown.min.css" />
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hint.css@2/hint.min.css" />
+
+  
+    
+    
+      
+      <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@10/styles/github-gist.min.css" />
+    
+  
+
+  
+    <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.css" />
+  
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_ba1fz6golrf.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+<!-- 自定义样式保持在最底部 -->
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.8.14","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"right","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"copy_btn":false,"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"baidu":null,"google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml"};
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+<meta name="generator" content="Hexo 6.1.0"></head>
+
+
+<body>
+  <header style="height: 70vh;">
+    <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>kris&#39; cabin</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                首页
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                归档
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                分类
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                标签
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                关于
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              &nbsp;<i class="iconfont icon-search"></i>&nbsp;
+            </a>
+          </li>
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">&nbsp;<i
+                class="iconfont icon-dark" id="color-toggle-icon"></i>&nbsp;</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+    <div class="banner" id="banner" parallax=true
+         style="background: url('https://picsum.photos/1200/400') no-repeat center center;
+           background-size: cover;">
+      <div class="full-bg-img">
+        <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+          <div class="page-header text-center fade-in-up">
+            <span class="h2" id="subtitle" title="JVM概述">
+              
+            </span>
+
+            
+              <div class="mt-3">
+  
+  
+    <span class="post-meta">
+      <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+      <time datetime="2022-05-01 19:01" pubdate>
+        2022年5月1日 晚上
+      </time>
+    </span>
+  
+</div>
+
+<div class="mt-1">
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-chart"></i>
+      3.7k 字
+    </span>
+  
+
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-clock-fill"></i>
+      
+      
+      31 分钟
+    </span>
+  
+
+  
+  
+</div>
+
+            
+          </div>
+
+          
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="d-none d-lg-block col-lg-2"></div>
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div class="py-5" id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">JVM概述</h1>
+            
+            <div class="markdown-body">
+              <h1 id="运行流程"><a href="#运行流程" class="headerlink" title="运行流程"></a>运行流程</h1><h2 id="JVM运行流程"><a href="#JVM运行流程" class="headerlink" title="JVM运行流程"></a>JVM运行流程</h2><p><img src="https://cdn.nlark.com/yuque/0/2022/jpeg/12966419/1650332103295-2c92eb96-a9a4-44da-ac1d-a87222be02ef.jpeg" srcset="/img/loading.gif" lazyload></p>
+<ol>
+<li>将.java文件编译为.class字节码文件</li>
+<li>类加载器将.class字节码文件中的类加载到JVM中</li>
+<li>JVM执行写好的类中的代码</li>
+</ol>
+<h2 id="类加载流程"><a href="#类加载流程" class="headerlink" title="类加载流程"></a>类加载流程</h2><ul>
+<li>加载</li>
+<li>验证</li>
+<li>准备</li>
+<li>解析</li>
+<li>初始化</li>
+<li>使用</li>
+<li>卸载<h3 id="加载阶段"><a href="#加载阶段" class="headerlink" title="加载阶段"></a>加载阶段</h3>当代码里需要使用到这个类的时候，就需要加载</li>
+</ul>
+<h3 id="验证阶段"><a href="#验证阶段" class="headerlink" title="验证阶段"></a>验证阶段</h3><p>根据Java虚拟机规范，校验加载进来的.class文件的内容是否符合指定的归档</p>
+<h3 id="准备阶段"><a href="#准备阶段" class="headerlink" title="准备阶段"></a>准备阶段</h3><p>给类分配内存空间，然后给里面的变量(static修饰的变量)分配内存空间，赋值默认的初始值</p>
+<h3 id="解析阶段"><a href="#解析阶段" class="headerlink" title="解析阶段"></a>解析阶段</h3><p>将符号引用替换为直接引用的过程</p>
+<h3 id="初始化阶段"><a href="#初始化阶段" class="headerlink" title="初始化阶段"></a>初始化阶段</h3><p>变量实际初始化的过程。</p>
+<p><strong>初始化的规则</strong></p>
+<ul>
+<li>如果初始化一个类的时候，发现他的父类还没有初始化，就必须先初始化他的父类</li>
+</ul>
+<h1 id="类加载器"><a href="#类加载器" class="headerlink" title="类加载器"></a>类加载器</h1><p>类加载从出发到初始化需要依靠类加载器实现。</p>
+<h2 id="类加载器分类"><a href="#类加载器分类" class="headerlink" title="类加载器分类"></a>类加载器分类</h2><ul>
+<li>启动类加载器 Bootstrap ClassLoader</li>
+</ul>
+<p>负责加载在机器上安装的Java目录下的核心类。一旦JVM启动，那么首先会依托启动类加载器，去加载Java安装目录下的<code>lib</code>目录中的核心类库。</p>
+<ul>
+<li>扩展类加载器 Extension ClassLoader</li>
+</ul>
+<p>负责加载Java安装目录下<code>lib\ext</code>目录</p>
+<ul>
+<li>应用程序类加载器 Application ClassLoader</li>
+</ul>
+<p>负责加载<code>ClassPath</code>环境变量所指定的路径中的类，即自己写好的类</p>
+<ul>
+<li>自定义加载器</li>
+</ul>
+<p>可以自定义类加载器，去根据需求加载类</p>
+<h2 id="双亲委派机制"><a href="#双亲委派机制" class="headerlink" title="双亲委派机制"></a>双亲委派机制</h2><p>JVM类加载器存在亲子层级结构，启动类加载器是最上层，扩展类加载器在第二层，应用程序类加载器在第三层，最后一程是自定义加载器。<br><img src="https://cdn.nlark.com/yuque/0/2022/png/12966419/1650333345396-b7eac5b3-8670-4c8c-89ed-9fafaf9ac629.png#clientId=ucd5f05b7-da21-4&crop=0&crop=0&crop=1&crop=1&from=paste&height=370&id=ue5a25008&margin=%5Bobject%20Object%5D&name=image.png&originHeight=370&originWidth=262&originalType=binary&ratio=1&rotation=0&showTitle=false&size=8073&status=done&style=none&taskId=ude39a97f-e7f6-457b-a0a7-b232b8e9de0&title=&width=262" srcset="/img/loading.gif" lazyload alt="image.png"><br>双亲委派机制<br>假设应用程序类加载器需要加载一个类，会首先委派给自己的父类加载器去加载，最终传导到顶层的类加载器去加载。如果父类加载器在自己负责的范围内，没有找到这个类，就会下推加载权利给自己的子类加载器。<br>这样可以避免多层级的加载器结构重复加载某些类。</p>
+<h1 id="JVM内存区域划分"><a href="#JVM内存区域划分" class="headerlink" title="JVM内存区域划分"></a>JVM内存区域划分</h1><h2 id="方法区"><a href="#方法区" class="headerlink" title="方法区"></a>方法区</h2><p>JDK1.8之前，代表JVM中的一块区域，存放从<code>.class</code>文件加载进来的类，还要一些类似常量池的东西在这个区域。</p>
+<p>JDK1.8之后，改名叫做<code>Metaspace</code>元数据空间，还是主要存放自己写的各种类相关的信息。</p>
+<p><strong>Metaspace</strong><br>如果在代码里使用了类似反射的方式，JVM会动态去生成一些类放入Metaspace区域</p>
+<h2 id="程序计数器"><a href="#程序计数器" class="headerlink" title="程序计数器"></a>程序计数器</h2><p>每个线程有一个自己的程序计数器，记录当前这个线程目前执行到了哪一条字节码指令。</p>
+<h2 id="虚拟机栈"><a href="#虚拟机栈" class="headerlink" title="虚拟机栈"></a>虚拟机栈</h2><p>存放方法内部的局部变量的数据。调用执行任何方法时，会给方法创建栈帧，然后入栈。<br>每个线程有自己的Java虚拟机栈。如果线程执行了一个方法，就会对这个方法调用创建对应的一个栈帧。<br>栈帧里面有这个方法的局部变量表、操作数栈、动态链接、方法出口等东西。</p>
+<h2 id="堆内存"><a href="#堆内存" class="headerlink" title="堆内存"></a>堆内存</h2><p>存放代码中创建的各种对象。</p>
+<h2 id="其他内存区域"><a href="#其他内存区域" class="headerlink" title="其他内存区域"></a>其他内存区域</h2><p>堆外内存</p>
+<ul>
+<li>底层API使用native方法调用底层程序的时候，会有线程对应的本地方法栈，存放各种native方法的局部变量表之类的信息</li>
+<li>通过NIO中的allocateDirect这种API，在Java堆外分配内存空间，通过Java虚拟机的DirectByteBuffer来引用和操作堆外内存空间</li>
+</ul>
+<h2 id="流程"><a href="#流程" class="headerlink" title="流程"></a>流程</h2><p><img src="https://cdn.nlark.com/yuque/0/2022/png/12966419/1650335156451-524eeb6d-e291-4933-8f7b-3ef1e7269b01.png#clientId=ucd5f05b7-da21-4&crop=0&crop=0&crop=1&crop=1&from=paste&height=416&id=ud98afa72&margin=%5Bobject%20Object%5D&name=image.png&originHeight=416&originWidth=581&originalType=binary&ratio=1&rotation=0&showTitle=false&size=21681&status=done&style=none&taskId=u47cde547-b04c-44e3-a5ff-9dbf62dcb82&title=&width=581" srcset="/img/loading.gif" lazyload alt="image.png"></p>
+<figure class="highlight java"><table><tr><td class="gutter"><div class="code-wrapper"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></div></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">Kafka</span> &#123;<br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">main</span><span class="hljs-params">(String[] args)</span> &#123;<br>        <span class="hljs-type">ReplicaManager</span> <span class="hljs-variable">replicaManager</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">ReplicaManager</span>();<br>        replicaManager.loadReplicasFromDisk();<br>    &#125;<br>&#125;<br><br><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">ReplicaManager</span>&#123;<br><br>    <span class="hljs-keyword">private</span> <span class="hljs-type">long</span> replicaCount;<br><br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">loadReplicasFromDisk</span><span class="hljs-params">()</span>&#123;<br>        <span class="hljs-type">Boolean</span> <span class="hljs-variable">hasFinishedLoad</span> <span class="hljs-operator">=</span> <span class="hljs-literal">false</span>;<br><br>        <span class="hljs-keyword">if</span>(isLocalDataCorrupt())&#123;&#125;<br>    &#125;<br><br>    <span class="hljs-keyword">public</span> Boolean <span class="hljs-title function_">isLocalDataCorrupt</span><span class="hljs-params">()</span>&#123;<br>        <span class="hljs-type">Boolean</span> <span class="hljs-variable">isCorrupt</span> <span class="hljs-operator">=</span> <span class="hljs-literal">false</span>;<br>        <span class="hljs-keyword">return</span> isCorrupt;<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+
+<ol>
+<li>JVM进程启动，加载Kafka类到内存，然后有一个main线程，开始执行Kafka中的main方法</li>
+<li>main线程关联了一个程序计数器，线程执行到哪一行指令，就会记录到哪一行</li>
+<li>main线程在执行main()方法的时候，会在main线程关联的Java虚拟机栈里面，压入一个main()方法的栈帧。</li>
+<li>mian线程发现需要创建一个ReplicaManager类的实例对象，此时会加载ReplicaManager类到内存中。</li>
+<li>然后创建一个ReplicaManager的对象实例分配在Java堆内存中，并且在mian()方法的栈帧里面的局部变量表引入<code>replicaManager</code>变量，让他引用ReplicaManager对象在Java堆内存中的地址。</li>
+<li>main线程开始执行ReplicaManager对象中的方法，依次把自己执行到的方法的栈帧压入自己的Java虚拟机栈</li>
+<li>执行完方法后，再把方法对应的栈帧从Java虚拟机栈里出栈</li>
+</ol>
+<h1 id="垃圾回收机制"><a href="#垃圾回收机制" class="headerlink" title="垃圾回收机制"></a>垃圾回收机制</h1><p>只要启动一个JVM进程，就会自带一个垃圾回收的后台线程，会不断检测JVM堆内存中的各个实例对象。<br>如果这个实例对象没有任何一个方法的局部变量指向他，也没有任何一个类的静态变量，包括常量等地方指向他，那么垃圾回收线程就会把没人指向的实例对象给回收掉。从内存中清除，不在占用资源。</p>
+<p>方法区的类回收的条件</p>
+<ul>
+<li>该类的所有实例对象已经从Java堆内存里被回收</li>
+<li>加载这个类的ClassLoader已经被回收</li>
+<li>对该类的Class对象没有任何应用</li>
+</ul>
+<h1 id="JVM内存划分"><a href="#JVM内存划分" class="headerlink" title="JVM内存划分"></a>JVM内存划分</h1><h2 id="分代模型"><a href="#分代模型" class="headerlink" title="分代模型"></a>分代模型</h2><ul>
+<li>年轻代</li>
+</ul>
+<p>很快就要被回收的对象</p>
+<ul>
+<li>老年代</li>
+</ul>
+<p>长期存在的对象</p>
+<ul>
+<li>永久代</li>
+</ul>
+<p>方法区。存放一些类信息。</p>
+<h2 id="垃圾回收流程"><a href="#垃圾回收流程" class="headerlink" title="垃圾回收流程"></a>垃圾回收流程</h2><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><code class="hljs java"><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> <span class="hljs-title class_">Kafka</span> &#123;<br>    <br>    <span class="hljs-keyword">private</span> <span class="hljs-keyword">static</span> <span class="hljs-type">ReplicFetcher</span> <span class="hljs-variable">fetcher</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">ReplicFetcher</span>();<br>    <br>    <span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">main</span><span class="hljs-params">(String[] args)</span> &#123;<br>        loadReplicasFromDisk();<br>        <span class="hljs-keyword">while</span>(<span class="hljs-literal">true</span>)&#123;<br>            loadReplicasFromRemote();<br>            Thread.sleep(<span class="hljs-number">1000</span>);<br>        &#125;<br>    &#125;<br>    <br>    <span class="hljs-keyword">private</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">loadReplicasFromDisk</span><span class="hljs-params">()</span>&#123;<br>        <span class="hljs-type">ReplicaManager</span> <span class="hljs-variable">replicaManager</span> <span class="hljs-operator">=</span> <span class="hljs-keyword">new</span> <span class="hljs-title class_">ReplicaManager</span>();<br>        replicaManager.load();<br>    &#125;<br>    <br>    <span class="hljs-keyword">private</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title function_">loadReplicasFromRemote</span><span class="hljs-params">()</span>&#123;   <br>        fetcher.fetch();<br>    &#125;<br>    <br>&#125;<br></code></pre></td></tr></table></figure>
+<p>fetcher引用了ReplicFetcher对象，是长期需要驻留在内存中使用的。这个对象在年轻代停留后，最终会进入老年代。</p>
+<ol>
+<li>大部分的正常对象，都是优先在新生代分配内存。</li>
+</ol>
+<p>fetcher和replicaManager实例对象，都是分配在新生代里面。</p>
+<ol start="2">
+<li>loadReplicasFromDisk()方法的栈帧出栈的时候，会导致没有任何局部变量应用replicaManager实例对象。当越来越多的这种对象快要占满新生代预分配的内存空间时，会触发一次新生代内存空间的垃圾回收。</li>
+</ol>
+<p>新生代内存的垃圾回收，称为<code>Minor GC</code>，也叫作<code>Young GC</code>，会尝试把新生代里面没有人引用的垃圾对象回收掉</p>
+<ol start="3">
+<li>长期存活的对象会躲过多次垃圾回收。每垃圾回收一次，如果一个对象没有被回收掉，他的年龄就会增加1。</li>
+</ol>
+<p>fetcher由于是静态变量，所以长期持有，导致一直没有被回收掉。当他到达一定的年龄，会被转移到Java堆内存的老年代中。</p>
+<ol start="4">
+<li>老年代的对象随着代码的运行，不再被人引用，达到一定条件也会进行垃圾回收。</li>
+</ol>
+<h2 id="内存相关参数"><a href="#内存相关参数" class="headerlink" title="内存相关参数"></a>内存相关参数</h2><ul>
+<li>-Xms</li>
+</ul>
+<p>Java堆内存初始大小</p>
+<ul>
+<li>-Xmx</li>
+</ul>
+<p>Java堆内存的最大大小</p>
+<ul>
+<li>-Xmn</li>
+</ul>
+<p>Java堆内存中的新生代大小，根据扣除新生代，剩下的就是老年代内存大小</p>
+<ul>
+<li>-XX:PermiSize</li>
+</ul>
+<p>永久代初始大小</p>
+<ul>
+<li>-XX:MaxPermSize</li>
+</ul>
+<p>永久代最大大小</p>
+<ul>
+<li>-XX:MetaspaceSize</li>
+</ul>
+<p>元空间初始大小</p>
+<ul>
+<li>-XX:MaxMetaspaceSize</li>
+</ul>
+<p>元空间最大大小</p>
+<ul>
+<li>-Xss</li>
+</ul>
+<p>每个线程的栈内存大小</p>
+<p>-Xms和-Xms，分别设置Java堆内存的刚开始的大小，以及允许扩张到的最大大小。<br>一般会设置成完全一样的大小，这个参数用来限定Java堆内存的总大小。</p>
+<p>-Xmm，设置Java堆内存中的新生代大小。</p>
+<p>-XX:PerSize和-XX:MaxPermSize，分别限定了永久代大小和永久代的最大大小。<br>通常也会设置成一样。一般设置几百MB够用。</p>
+<p>-XX:MaxPermSize和-XX:MaxMetaspaceSize，在JDK1.8之后，永久代被元空间代替。</p>
+<p>-Xss，限定了每个线程的栈内存大小。一般默认就是512KB-1MB。<br><img src="https://cdn.nlark.com/yuque/0/2022/png/12966419/1650351916701-e12a8853-b1d9-45cf-b7aa-5e26f0b7dc14.png#clientId=ucd5f05b7-da21-4&crop=0&crop=0&crop=1&crop=1&from=paste&height=344&id=u57a1c73a&margin=%5Bobject%20Object%5D&name=image.png&originHeight=344&originWidth=368&originalType=binary&ratio=1&rotation=0&showTitle=false&size=9619&status=done&style=none&taskId=ucfe8876b-671b-4de2-9e56-60a6d3f7e9b&title=&width=368" srcset="/img/loading.gif" lazyload alt="image.png"></p>
+
+            </div>
+            <hr>
+            <div>
+              <div class="post-metas mb-3">
+                
+                  <div class="post-meta mr-3">
+                    <i class="iconfont icon-category"></i>
+                    
+                      <a class="hover-with-bg" href="/categories/Java/">Java</a>
+                    
+                  </div>
+                
+                
+                  <div class="post-meta">
+                    <i class="iconfont icon-tags"></i>
+                    
+                      <a class="hover-with-bg" href="/tags/JVM/">JVM</a>
+                    
+                  </div>
+                
+              </div>
+              
+                <p class="note note-warning">
+                  
+                    本博客所有文章除特别声明外，均采用 <a target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/deed.zh" rel="nofollow noopener noopener">CC BY-SA 4.0 协议</a> ，转载请注明出处！
+                  
+                </p>
+              
+              
+                <div class="post-prevnext">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2022/05/01/JVM/JVM%E6%A1%88%E4%BE%8B/">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">JVM案例</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+    
+      <div class="d-none d-lg-block col-lg-2 toc-container" id="toc-ctn">
+        <div id="toc">
+  <p class="toc-header"><i class="iconfont icon-list"></i>&nbsp;目录</p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+      </div>
+    
+  </div>
+</div>
+
+<!-- Custom -->
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v"
+                 for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+
+    
+  </main>
+
+  <footer class="text-center mt-5 py-3">
+  <div class="footer-content">
+     <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+  </div>
+  
+
+  
+
+  
+</footer>
+
+
+  <!-- SCRIPTS -->
+  
+  <script  src="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js" ></script>
+<script  src="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+<!-- Plugins -->
+
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+  
+
+
+
+  
+    <script  src="https://cdn.jsdelivr.net/npm/tocbot@4/dist/tocbot.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/anchor-js@4/anchor.min.js" ></script>
+  
+  
+
+
+
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/typed.js@2/lib/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var title = document.getElementById('subtitle').title;
+      
+        typing(title);
+      
+    })(window, document);
+  </script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- 主题的启动项 保持在最底部 -->
+<script  src="/js/boot.js" ></script>
+
+
+</body>
+</html>

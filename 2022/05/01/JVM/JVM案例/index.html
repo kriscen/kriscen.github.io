@@ -1,0 +1,536 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/favicon.png">
+  <link rel="icon" href="/img/favicon.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="kris cen">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="每日百万交易的支付系统背景 瓶颈分析每天JVM会频繁的创建和销毁100W个支付订单。  估算每秒需要处理多少订单  假设每天100W个字符订单，用户交易行为发生在高峰期。假设高峰期每天几个小时，用100w平均分配到高峰期里，估算TPS，大概为每秒100笔订单。假设支付系统集群部署3个机器，所以每个机器实际每秒处理30笔订单。  估算每个订单处理耗时  按照上面的假设，需要TPS30来算，内存中每秒">
+<meta property="og:type" content="article">
+<meta property="og:title" content="JVM案例">
+<meta property="og:url" content="http://example.com/2022/05/01/JVM/JVM%E6%A1%88%E4%BE%8B/index.html">
+<meta property="og:site_name" content="kris&#39; cabin">
+<meta property="og:description" content="每日百万交易的支付系统背景 瓶颈分析每天JVM会频繁的创建和销毁100W个支付订单。  估算每秒需要处理多少订单  假设每天100W个字符订单，用户交易行为发生在高峰期。假设高峰期每天几个小时，用100w平均分配到高峰期里，估算TPS，大概为每秒100笔订单。假设支付系统集群部署3个机器，所以每个机器实际每秒处理30笔订单。  估算每个订单处理耗时  按照上面的假设，需要TPS30来算，内存中每秒">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://cdn.nlark.com/yuque/0/2022/png/12966419/1650352307495-849c668f-8a5e-492c-ab58-059818bfe0a6.png#clientId=u0981b04d-1a44-4&crop=0&crop=0&crop=1&crop=1&from=paste&height=318&id=uc2f9b2f3&margin=%5Bobject%20Object%5D&name=image.png&originHeight=318&originWidth=625&originalType=binary&ratio=1&rotation=0&showTitle=false&size=13955&status=done&style=none&taskId=u9f40696b-5162-45c5-8092-ce6d60ba638&title=&width=625">
+<meta property="og:image" content="https://cdn.nlark.com/yuque/0/2022/png/12966419/1650419797784-202769e8-1cf6-4c5c-8b8f-e7f3b47a6072.png#clientId=u08968c11-d05f-4&crop=0&crop=0&crop=1&crop=1&from=paste&height=228&id=u9d942e3f&margin=%5Bobject%20Object%5D&name=image.png&originHeight=228&originWidth=262&originalType=binary&ratio=1&rotation=0&showTitle=false&size=6664&status=done&style=none&taskId=u9eb1c519-8a1e-4d2c-8678-3073ceec095&title=&width=262">
+<meta property="article:published_time" content="2022-05-01T11:02:00.000Z">
+<meta property="article:modified_time" content="2022-07-05T15:19:59.933Z">
+<meta property="article:author" content="kris cen">
+<meta property="article:tag" content="JVM">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://cdn.nlark.com/yuque/0/2022/png/12966419/1650352307495-849c668f-8a5e-492c-ab58-059818bfe0a6.png#clientId=u0981b04d-1a44-4&crop=0&crop=0&crop=1&crop=1&from=paste&height=318&id=uc2f9b2f3&margin=%5Bobject%20Object%5D&name=image.png&originHeight=318&originWidth=625&originalType=binary&ratio=1&rotation=0&showTitle=false&size=13955&status=done&style=none&taskId=u9f40696b-5162-45c5-8092-ce6d60ba638&title=&width=625">
+  
+  
+  <title>JVM案例 - kris&#39; cabin</title>
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/css/bootstrap.min.css" />
+
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@4/github-markdown.min.css" />
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hint.css@2/hint.min.css" />
+
+  
+    
+    
+      
+      <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@10/styles/github-gist.min.css" />
+    
+  
+
+  
+    <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.css" />
+  
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_ba1fz6golrf.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_lbnruvf0jn.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+<!-- 自定义样式保持在最底部 -->
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.8.14","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"right","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"copy_btn":false,"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"baidu":null,"google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false}},"search_path":"/local-search.xml"};
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+<meta name="generator" content="Hexo 6.1.0"></head>
+
+
+<body>
+  <header style="height: 70vh;">
+    <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>kris&#39; cabin</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                首页
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                归档
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                分类
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                标签
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                关于
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              &nbsp;<i class="iconfont icon-search"></i>&nbsp;
+            </a>
+          </li>
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">&nbsp;<i
+                class="iconfont icon-dark" id="color-toggle-icon"></i>&nbsp;</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+    <div class="banner" id="banner" parallax=true
+         style="background: url('https://picsum.photos/1200/400') no-repeat center center;
+           background-size: cover;">
+      <div class="full-bg-img">
+        <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+          <div class="page-header text-center fade-in-up">
+            <span class="h2" id="subtitle" title="JVM案例">
+              
+            </span>
+
+            
+              <div class="mt-3">
+  
+  
+    <span class="post-meta">
+      <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+      <time datetime="2022-05-01 19:02" pubdate>
+        2022年5月1日 晚上
+      </time>
+    </span>
+  
+</div>
+
+<div class="mt-1">
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-chart"></i>
+      4.1k 字
+    </span>
+  
+
+  
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-clock-fill"></i>
+      
+      
+      34 分钟
+    </span>
+  
+
+  
+  
+</div>
+
+            
+          </div>
+
+          
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="d-none d-lg-block col-lg-2"></div>
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div class="py-5" id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">JVM案例</h1>
+            
+            <div class="markdown-body">
+              <h1 id="每日百万交易的支付系统"><a href="#每日百万交易的支付系统" class="headerlink" title="每日百万交易的支付系统"></a>每日百万交易的支付系统</h1><h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p><img src="https://cdn.nlark.com/yuque/0/2022/png/12966419/1650352307495-849c668f-8a5e-492c-ab58-059818bfe0a6.png#clientId=u0981b04d-1a44-4&crop=0&crop=0&crop=1&crop=1&from=paste&height=318&id=uc2f9b2f3&margin=%5Bobject%20Object%5D&name=image.png&originHeight=318&originWidth=625&originalType=binary&ratio=1&rotation=0&showTitle=false&size=13955&status=done&style=none&taskId=u9f40696b-5162-45c5-8092-ce6d60ba638&title=&width=625" srcset="/img/loading.gif" lazyload alt="image.png"></p>
+<h2 id="瓶颈分析"><a href="#瓶颈分析" class="headerlink" title="瓶颈分析"></a>瓶颈分析</h2><p>每天JVM会频繁的创建和销毁100W个支付订单。</p>
+<ol>
+<li>估算每秒需要处理多少订单</li>
+</ol>
+<p>假设每天100W个字符订单，用户交易行为发生在高峰期。假设高峰期每天几个小时，用100w平均分配到高峰期里，估算TPS，大概为每秒100笔订单。<br>假设支付系统集群部署3个机器，所以每个机器实际每秒处理30笔订单。</p>
+<ol start="2">
+<li>估算每个订单处理耗时</li>
+</ol>
+<p>按照上面的假设，需要TPS30来算，内存中每秒至少存在30个订单的对象。</p>
+<ol start="3">
+<li>估算支付订单需要多大的内存空间</li>
+</ol>
+<p>可以按照订单对象存在多少变量，按变量占用字节数估算。实际还有其他东西会比估算的大。可以测试环境打印一个看看。</p>
+<ol start="4">
+<li>每秒发起的支付请求对内存的占用</li>
+</ol>
+<p>30个支付订单，大概占用内存空间30*500字节&#x3D;15000字节，大概15kb</p>
+<ol start="5">
+<li>支付系统运行情况下分析</li>
+</ol>
+<p>每秒30个支付请求，创建30个支付订单对象，kb级别的占用。<br>下一秒又产生30个支付订单对象。<br>等到新生代里面存在几十万个对象的时候，大概占用几百MB，新生代就满了，需要进行一次Minor GC，将新生代里面的垃圾对象回收掉，腾出空间。</p>
+<ol start="6">
+<li>对完整系统内存占用预估</li>
+</ol>
+<p>除了核心流程的对象占用，实际上还会存在其他对象。根据系统压力，姑且按照之前计算结果的10-20倍估算。</p>
+<h2 id="优化方案"><a href="#优化方案" class="headerlink" title="优化方案"></a>优化方案</h2><p>一般线上业务系统的机器配置为2核4G，或者4核8G。</p>
+<p>假如使用2核4G的机器，除去机器自身占用内存，大概剩下2G给JVM进程，按照方法区，栈内存，堆内存划分完，堆内存大概分配到1G的内存空间。<br>然后堆内存分为新生代和老年代，划分完也就几百MB。<br>按照上面的业务模型，大概几百秒触发一次Minor GC，太频繁了。</p>
+<p>因此按照4核8G的机器分配。<br>-Xms和-Xmx设置为3G<br>-Xmn设置为2G</p>
+<h1 id="日处理上亿数据的计算系统"><a href="#日处理上亿数据的计算系统" class="headerlink" title="日处理上亿数据的计算系统"></a>日处理上亿数据的计算系统</h1><h2 id="背景-1"><a href="#背景-1" class="headerlink" title="背景"></a>背景</h2><p><img src="https://cdn.nlark.com/yuque/0/2022/png/12966419/1650419797784-202769e8-1cf6-4c5c-8b8f-e7f3b47a6072.png#clientId=u08968c11-d05f-4&crop=0&crop=0&crop=1&crop=1&from=paste&height=228&id=u9d942e3f&margin=%5Bobject%20Object%5D&name=image.png&originHeight=228&originWidth=262&originalType=binary&ratio=1&rotation=0&showTitle=false&size=6664&status=done&style=none&taskId=u9eb1c519-8a1e-4d2c-8678-3073ceec095&title=&width=262" srcset="/img/loading.gif" lazyload alt="image.png"><br>计算系统不同的通过sql和其他方式从数据存储中提取数据到内存中计算，生产负载大概是每分钟执行500次数据提取和计算任务。<br>在部署多台机器的情况下，每台机器每分钟大概负责执行100次数据提取和计算任务。<br>每次提取大概1W左右的数据到内存计算，平均每次计算大概需要10s左右。<br>每台机器的配置为4核8G，JVM内存占用4G，其中新生代和老年代分别占用1.5G内存。</p>
+<h2 id="瓶颈分析-1"><a href="#瓶颈分析-1" class="headerlink" title="瓶颈分析"></a>瓶颈分析</h2><ol>
+<li>系统多快会塞满新生代？</li>
+</ol>
+<p>每条数据大概20个字段，大概每条数据在1KB大小，那么每次计算任务超过1W条就对应了10MB大小。<br>新生代按默认8：1：1进行分配的话，Eden区1.2GB，每块Survivor区在100MB左右。<br>按上面的分析，每分钟100次计算差不多1分钟之后Eden区就满了。</p>
+<ol start="2">
+<li>触发Minor GC的时候有多少对象进入老年代？</li>
+</ol>
+<p>假如新生代的Eden区1分钟之后就塞满对象，继续执行任务时触发Minor GC。<br>执行Minor GC前，会进行检查。首先看老年代的可用内存空间是否大于新生代全部对象。目前老年嗲1.5GB，新生代Eden区总共1.2GB，所以放得下。就会直接执行Minor GC。<br>此时每个计算任务1万条数据需要计算10秒，每分钟执行100个。假设还剩下20个计算任务，大概就是还剩下200MB对象存活。由于Survivor区只有100MB放不下200MB对象，因此会全部进入老年代。</p>
+<ol start="3">
+<li>系统运行多久，老年代大概会填满？</li>
+</ol>
+<p>按照1分钟进行一次Minor GC，200MB对象进入老年代，老年代大小1.5GB。那么在7分钟左右，老年代剩余空间就剩下100MB。</p>
+<ol start="4">
+<li>系统运行多久，老年代会触发1次Full GC？</li>
+</ol>
+<p>第8分钟结束的时候，触发Minor GC，生成200MB垃圾，发现老年代只有100MB空间，比之前每次Minor GC进入老年代的200MB都要小，就会直接触发一次Full GC。</p>
+<h2 id="优化方案-1"><a href="#优化方案-1" class="headerlink" title="优化方案"></a>优化方案</h2><p>这个系统是数据计算系统，每次执行Minor GC的时候，会有一批数据没有计算完。按照现有的内存模型，瓶颈就是每次Survivor区域放不下存活对象。</p>
+<p>优化后，新增新生代的内存比例，3GB左右的堆内存，其中2GB分配给新生代，1GB留给老年代。<br>这样Survivor区大概就是200MB，每次刚好放得下Minor GC过后存活的对象。<br>还可以调整<code>-XX:SurvivorRatio=8</code>这个参数，默认是Eden区比例为80%,在内存有限的情况下，可以降低Eden区比例，给Survivor更多内存空间。</p>
+<h1 id="每日上亿请求量的电商系统"><a href="#每日上亿请求量的电商系统" class="headerlink" title="每日上亿请求量的电商系统"></a>每日上亿请求量的电商系统</h1><h2 id="背景-2"><a href="#背景-2" class="headerlink" title="背景"></a>背景</h2><p>如果请求量上亿的话，按一个用户平均20次访问计算，大概需要500w日活。<br>按照10%付费转化率计算，每天大概有50W人会下单，那么大概就是每天会有50W订单。<br>按照28法则，算订单集中在每天的4小时高峰内，平均下来每秒大概几十个订单。<br>但是在双十一等电商节的情况下，可能10分钟内就有50W订单，此时每秒接近1000个订单。<br>因此，按3台3核8G的机器计算，每秒每个机器抗300-400个请求没有压力。针对这种场景，需要对JVM有限的内存资源进行合理的分配和优化，包括对垃圾回收进行合理的优化，让JVM的GC次数尽可能减少，尽量避免Full GC，减少JVM的GC对高峰期系统的影响。</p>
+<h2 id="年轻代垃圾回收参数优化"><a href="#年轻代垃圾回收参数优化" class="headerlink" title="年轻代垃圾回收参数优化"></a>年轻代垃圾回收参数优化</h2><h3 id="问题分析"><a href="#问题分析" class="headerlink" title="问题分析"></a>问题分析</h3><ol>
+<li>大促高峰期内存使用模型估算</li>
+</ol>
+<p>按照每秒处理300个下单请求估算。每个订单按照1KB估算，单300个订单会存在300kb的内存开销。然后算上订单对象连带的订单条目、库存、促销、优惠券等业务对象，一般单个对象开销放大10-20倍。<br>同时除了下单本身，还会存在订单查询等操作，再扩大10倍。<br>每秒钟大概300KB<em>20</em>10 &#x3D; 60MB的内存开销。过一秒之后，可以认为存在60mb的对象垃圾。</p>
+<ol start="2">
+<li>内存如何分配</li>
+</ol>
+<p>如果是4核8G的机器，JVM内存一般给到4G，剩余的留给操作系统。<br>其中堆内存3G，新生代1.5G，老年代1.5G。<br>每个线程的Java虚拟机栈有1M，那么如果存在几百个线程大概会占用几百M<br>永久代给256M</p>
+<ol start="3">
+<li>运行内存分析</li>
+</ol>
+<p>按照8:1:1分区，Eden区占据1.2GB，Survivor每个占用150MB。<br>订单系统每秒处理300个订单，占用新生代60MB空间。过1秒之后，60MB对象会变成垃圾，新生代1.5G内存空间大概需要20S占满。<br>20秒过后，进行Minor GC，进行前置检查比较老年代可用空间大小和历次Minor GC后进入老年代对象的平均大小。<br>Minor GC第一次运行，回收绝大部分新生代对象，除了还在请求处理中的订单，大部分订单处理完成，此时存活对象可能100MB左右，放入S1区域<br>又过了20S，Eden区满了之后，进行Minor GC，将Eden区和S1区的对象清除，剩余对象转入S2区域。</p>
+<ol start="4">
+<li>Survivor空间判断</li>
+</ol>
+<p>Survivor空间大小毕竟是估算的，可能会存在上下波动。<br>根据动态年龄判断，如果每次都是超过50%并且是同龄对象，也会导致对象进入老年代。<br>需要调整新生代和老年代的大小。普通的业务系统，大部分对象都是短生命周期，不应该频繁进入老年代。也没必要给老年代维持过大的内存空间，首先让对象尽量留在新生代。<br>将新生代调整为2G,老年代1G。此时Eden区1.6G，每个Survivor200MB。</p>
+<ol start="5">
+<li>新生代多少年龄进入老年代</li>
+</ol>
+<p>对于业务系统，使用默认就行了。业务系统一般进入老年代都是Spring管理的对象。<br>这个参数需要根据业务内存运行流程判断是否更改。</p>
+<ol start="6">
+<li>多大的对象直接进入老年代</li>
+</ol>
+<p>一般设置1MB就行了，很少存在超过1MB的大对象。</p>
+<h3 id="最终参数"><a href="#最终参数" class="headerlink" title="最终参数"></a>最终参数</h3><p>-Xms3072M -Xmx3072M -Xmn2048M -Xss1M  -XX:PermSize&#x3D;256M -XX:MaxPermSize&#x3D;256M  -XX:SurvivorRatio&#x3D;8 -XX:MaxTenuringThreshold&#x3D;5 -XX:PretenureSizeThreshold&#x3D;1M -XX:+UseParNewGC -XX:+UseConcMarkSweepGC</p>
+<h2 id="老年代垃圾回收参数优化"><a href="#老年代垃圾回收参数优化" class="headerlink" title="老年代垃圾回收参数优化"></a>老年代垃圾回收参数优化</h2><h3 id="问题分析-1"><a href="#问题分析-1" class="headerlink" title="问题分析"></a>问题分析</h3><ol>
+<li>什么情况下会让一些对象进入老年代</li>
+</ol>
+<ul>
+<li><code>-XX:MaxTenuringThreshold=5</code>这个参数会让几分钟内连续躲过5次Minor GC的对象迅速进入老年代。</li>
+<li>大对象，比如一个大数组或者大List。这种情况案例不存在，忽略</li>
+<li>Minor GC之后可能存活对象超过200MB，放不下Survivor区域，或者一下子占用Survivor超过50%.</li>
+</ul>
+<ol start="2">
+<li>多久时间触发一次Full GC</li>
+</ol>
+<p>按照上面分析，可能系统运行半小时-1小时之后，才有接近1GB的对象进入老年区，才可能满足触发Full GC的条件。<br>这个时间段已经超过了大促时间，并且日常使用比这个时间更久。</p>
+<h3 id="最终参数-1"><a href="#最终参数-1" class="headerlink" title="最终参数"></a>最终参数</h3><p>-Xms3072M -Xmx3072M -Xmn2048M -Xss1M  -XX:PermSize&#x3D;256M -XX:MaxPermSize&#x3D;256M  -XX:SurvivorRatio&#x3D;8 -XX:MaxTenuringThreshold&#x3D;5 -XX:PretenureSizeThreshold&#x3D;1M -XX:+UseParNewGC -XX:+UseConcMarkSweepGC -XX:CMSInitiatingOccupancyFaction&#x3D;92 -XX:+UseCMSCompactAtFullCollection -XX:CMSFullGCsBeforeCompaction&#x3D;0</p>
+<h1 id="百万级用户的在线教育平台"><a href="#百万级用户的在线教育平台" class="headerlink" title="百万级用户的在线教育平台"></a>百万级用户的在线教育平台</h1><h2 id="背景-3"><a href="#背景-3" class="headerlink" title="背景"></a>背景</h2><p>百万级用户的在想教育平台，主要目标用户群体是几岁到十几岁的小孩，注册用户几百万规模，日活用户规模在几十万。<br>上课的高峰阶段在每天晚上几个小时内，以及周末，核心业务大概就是视频课程中的交互。<br>预估晚上高峰3小时内，总共60W活跃用户，每个用户大概上一小时课程。那么每小时大概20W用户同时在线。20W活跃用户大概每分钟进行一次交互，一小时进行60次。一小时内总计1200W吃交互动作，平均每秒3000次。<br>3000次并发，按每台4核8G的机器抗600次请求计算，需要5台机器。<br> 每次互动请求，大概会连带创建对象，占用几KB，当成5KB预估，每秒600请求，会占用3MB内存。</p>
+
+            </div>
+            <hr>
+            <div>
+              <div class="post-metas mb-3">
+                
+                  <div class="post-meta mr-3">
+                    <i class="iconfont icon-category"></i>
+                    
+                      <a class="hover-with-bg" href="/categories/Java/">Java</a>
+                    
+                  </div>
+                
+                
+                  <div class="post-meta">
+                    <i class="iconfont icon-tags"></i>
+                    
+                      <a class="hover-with-bg" href="/tags/JVM/">JVM</a>
+                    
+                  </div>
+                
+              </div>
+              
+                <p class="note note-warning">
+                  
+                    本博客所有文章除特别声明外，均采用 <a target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/deed.zh" rel="nofollow noopener noopener">CC BY-SA 4.0 协议</a> ，转载请注明出处！
+                  
+                </p>
+              
+              
+                <div class="post-prevnext">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2022/05/01/JVM/%E5%9E%83%E5%9C%BE%E5%9B%9E%E6%94%B6/">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">垃圾回收</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2022/05/01/JVM/JVM%E6%A6%82%E8%BF%B0/">
+                        <span class="hidden-mobile">JVM概述</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+    
+      <div class="d-none d-lg-block col-lg-2 toc-container" id="toc-ctn">
+        <div id="toc">
+  <p class="toc-header"><i class="iconfont icon-list"></i>&nbsp;目录</p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+      </div>
+    
+  </div>
+</div>
+
+<!-- Custom -->
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v"
+                 for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+
+    
+  </main>
+
+  <footer class="text-center mt-5 py-3">
+  <div class="footer-content">
+     <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+  </div>
+  
+
+  
+
+  
+</footer>
+
+
+  <!-- SCRIPTS -->
+  
+  <script  src="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nprogress@0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js" ></script>
+<script  src="https://cdn.jsdelivr.net/npm/bootstrap@4/dist/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+<!-- Plugins -->
+
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+  
+
+
+
+  
+    <script  src="https://cdn.jsdelivr.net/npm/tocbot@4/dist/tocbot.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3/dist/jquery.fancybox.min.js" ></script>
+  
+  
+    <script  src="https://cdn.jsdelivr.net/npm/anchor-js@4/anchor.min.js" ></script>
+  
+  
+
+
+
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/typed.js@2/lib/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var title = document.getElementById('subtitle').title;
+      
+        typing(title);
+      
+    })(window, document);
+  </script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- 主题的启动项 保持在最底部 -->
+<script  src="/js/boot.js" ></script>
+
+
+</body>
+</html>
